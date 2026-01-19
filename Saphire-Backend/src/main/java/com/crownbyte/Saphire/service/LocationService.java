@@ -108,8 +108,8 @@ public class LocationService implements LocationServiceImpl {
     private LocationResponse toResponse(LocationEntity entity) {
         return LocationResponse.builder()
                 .id(entity.getId())
-                .companyId(entity.getCompany().getId())
-                .companyName(entity.getCompany().getName())
+                .companyId(entity.getCompany() != null ? entity.getCompany().getId() : null)
+                .companyName(entity.getCompany() != null ? entity.getCompany().getName() : null)
                 .name(entity.getName())
                 .code(entity.getCode())
                 .address(entity.getAddress())
