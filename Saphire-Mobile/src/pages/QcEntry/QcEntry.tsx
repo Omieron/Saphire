@@ -1,0 +1,692 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Send, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
+import { templateApi, recordApi } from '../../api';
+import { useLanguage } from '../../contexts/LanguageContext';
+import ConfirmModal from '../../components/ConfirmModal';
+
+// Types
+interface Field {
+    id: number;
+    fieldKey: string;
+    label: string;
+    inputType: string;
+    targetValue?: number;
+    minValue?: number;
+    maxValue?: number;
+    required: boolean;
+    options?: string | string[]; // For SELECT type - can be array or newline/comma separated string
+}
+
+interface Section {
+    id: number;
+    name: string;
+    displayOrder: number;
+    isRepeatable: boolean;
+    repeatCount?: number;
+    fields: Field[];
+}
+
+interface Template {
+    id: number;
+    name: string;
+    sections: Section[];
+}
+
+// Helper Components
+function PassFailButton({ value, onChange, labels }: { value: boolean | null; onChange: (v: boolean) => void; labels: { yes: string; no: string } }) {
+    return (
+        <div className="flex gap-2">
+            <button
+                type="button"
+                onClick={() => onChange(true)}
+                className={`flex-1 py-4 rounded-xl font-semibold text-lg transition-all ${value === true
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30'
+                    : 'bg-[var(--color-surface)] border-2 border-[var(--color-border)] text-[var(--color-text)] hover:border-green-500/50'}`}
+            >
+                ✓ {labels.yes}
+            </button>
+            <button
+                type="button"
+                onClick={() => onChange(false)}
+                className={`flex-1 py-4 rounded-xl font-semibold text-lg transition-all ${value === false
+                    ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/30'
+                    : 'bg-[var(--color-surface)] border-2 border-[var(--color-border)] text-[var(--color-text)] hover:border-red-500/50'}`}
+            >
+                ✗ {labels.no}
+            </button>
+        </div>
+    );
+}
+
+function NumericInput({ value, onChange, field, placeholder }: { value: string; onChange: (v: string) => void; field: Field; placeholder?: string }) {
+    return (
+        <div className="space-y-2">
+            <input
+                type="number"
+                inputMode="decimal"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder || '—'}
+                className="w-full px-4 py-4 text-lg rounded-xl border-2 transition-all bg-[var(--color-surface)] text-[var(--color-text)] border-[var(--color-border)] focus:border-teal-500"
+            />
+            {(field.minValue !== undefined || field.maxValue !== undefined) && (
+                <div className="flex gap-2 text-xs">
+                    {field.minValue !== undefined && (
+                        <span className="px-2 py-1 bg-teal-500/20 text-teal-600 dark:text-teal-400 rounded">Min: {field.minValue}</span>
+                    )}
+                    {field.maxValue !== undefined && (
+                        <span className="px-2 py-1 bg-teal-500/20 text-teal-600 dark:text-teal-400 rounded">Max: {field.maxValue}</span>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Main Component
+export default function QcEntry() {
+    const { templateId } = useParams();
+    const [searchParams] = useSearchParams();
+    const machineId = searchParams.get('machineId');
+    const navigate = useNavigate();
+    const { t } = useLanguage();
+
+    // Core state
+    const [template, setTemplate] = useState<Template | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [values, setValues] = useState<Record<string, any>>({});
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    // Panel state - using a simple number state
+    const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
+    const [selectedSampleNum, setSelectedSampleNum] = useState<number | null>(null);
+
+    // Modal state
+    const [showBackConfirm, setShowBackConfirm] = useState(false);
+    const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+
+    // Load template
+    useEffect(() => {
+        if (templateId) {
+            templateApi.getById(parseInt(templateId))
+                .then(res => setTemplate(res.data.data))
+                .catch(err => console.error('Template fetch error:', err))
+                .finally(() => setLoading(false));
+        }
+    }, [templateId]);
+
+    // Load saved draft from localStorage
+    useEffect(() => {
+        if (templateId && machineId) {
+            const saved = localStorage.getItem(`qc_draft_${templateId}_${machineId}`);
+            if (saved) {
+                try {
+                    setValues(JSON.parse(saved));
+                } catch (e) {
+                    console.error('Failed to load draft');
+                }
+            }
+        }
+    }, [templateId, machineId]);
+
+    // Auto-save to localStorage
+    useEffect(() => {
+        if (templateId && machineId && Object.keys(values).length > 0) {
+            localStorage.setItem(`qc_draft_${templateId}_${machineId}`, JSON.stringify(values));
+        }
+    }, [values, templateId, machineId]);
+
+    // Handle value changes
+    const updateValue = useCallback((key: string, val: any) => {
+        setValues(prev => ({ ...prev, [key]: val }));
+    }, []);
+
+    // Get sample status for coloring
+    const getSampleStatus = useCallback((sectionId: number, sampleNum: number): 'empty' | 'partial' | 'passed' | 'failed' => {
+        const section = template?.sections.find(s => s.id === sectionId);
+        if (!section) return 'empty';
+
+        let filled = 0;
+        let total = section.fields.length;
+        let hasFailed = false;
+
+        section.fields.forEach(field => {
+            const key = `${field.fieldKey}_sample_${sampleNum}`;
+            const val = values[key];
+
+            if (val !== undefined && val !== null && val !== '') {
+                filled++;
+
+                // Check for failed status - any "Hayır" (false) means failed
+                const inputType = (field.inputType || '').toUpperCase();
+                if ((inputType === 'PASS_FAIL' || inputType === 'PASSFAIL' || inputType === 'BOOLEAN' || !inputType) && val === false) {
+                    hasFailed = true;
+                }
+                // Check numeric values against min/max
+                if (inputType === 'NUMERIC') {
+                    const numVal = parseFloat(val);
+                    if (!isNaN(numVal)) {
+                        if ((field.minValue !== undefined && numVal < field.minValue) ||
+                            (field.maxValue !== undefined && numVal > field.maxValue)) {
+                            hasFailed = true;
+                        }
+                    }
+                }
+            }
+        });
+
+        if (filled === 0) return 'empty';
+        if (hasFailed) return 'failed';
+        if (filled < total) return 'partial';
+        return 'passed';
+    }, [template, values]);
+
+    // Calculate progress
+    const getProgress = useCallback(() => {
+        if (!template) return { filled: 0, total: 0 };
+
+        let filled = 0;
+        let total = 0;
+
+        template.sections.forEach(section => {
+            if (section.isRepeatable && section.repeatCount && section.repeatCount > 1) {
+                for (let i = 1; i <= section.repeatCount; i++) {
+                    section.fields.forEach(field => {
+                        total++;
+                        const key = `${field.fieldKey}_sample_${i}`;
+                        if (values[key] !== undefined && values[key] !== null && values[key] !== '') {
+                            filled++;
+                        }
+                    });
+                }
+            } else {
+                section.fields.forEach(field => {
+                    total++;
+                    if (values[field.fieldKey] !== undefined && values[field.fieldKey] !== null && values[field.fieldKey] !== '') {
+                        filled++;
+                    }
+                });
+            }
+        });
+
+        return { filled, total };
+    }, [template, values]);
+
+    // Handle back button
+    const handleBack = () => {
+        if (Object.keys(values).length > 0) {
+            setShowBackConfirm(true);
+        } else {
+            navigate('/dashboard');
+        }
+    };
+
+    // Handle submit
+    const handleSubmit = async () => {
+        setShowSubmitConfirm(false);
+        setSubmitting(true);
+
+        try {
+            // Build values array in backend format
+            const valuesArray: Array<{
+                fieldId: number;
+                repeatIndex?: number;
+                groupKey?: string;
+                valueText?: string;
+                valueNumber?: number;
+                valueBoolean?: boolean;
+            }> = [];
+
+            template?.sections.forEach(section => {
+                if (section.isRepeatable && section.repeatCount && section.repeatCount > 1) {
+                    // Repeatable section - add repeatIndex for each sample
+                    for (let i = 1; i <= section.repeatCount; i++) {
+                        section.fields.forEach(field => {
+                            const key = `${field.fieldKey}_sample_${i}`;
+                            const value = values[key];
+                            if (value !== undefined && value !== null && value !== '') {
+                                const valueEntry: any = {
+                                    fieldId: field.id,
+                                    repeatIndex: i,
+                                    groupKey: `sample_${i}`
+                                };
+
+                                // Determine value type
+                                if (typeof value === 'boolean') {
+                                    valueEntry.valueBoolean = value;
+                                } else if (typeof value === 'number' || !isNaN(parseFloat(value))) {
+                                    valueEntry.valueNumber = parseFloat(value);
+                                } else {
+                                    valueEntry.valueText = String(value);
+                                }
+
+                                valuesArray.push(valueEntry);
+                            }
+                        });
+                    }
+                } else {
+                    // Non-repeatable section
+                    section.fields.forEach(field => {
+                        const value = values[field.fieldKey];
+                        if (value !== undefined && value !== null && value !== '') {
+                            const valueEntry: any = {
+                                fieldId: field.id
+                            };
+
+                            // Determine value type
+                            if (typeof value === 'boolean') {
+                                valueEntry.valueBoolean = value;
+                            } else if (typeof value === 'number' || !isNaN(parseFloat(value))) {
+                                valueEntry.valueNumber = parseFloat(value);
+                            } else {
+                                valueEntry.valueText = String(value);
+                            }
+
+                            valuesArray.push(valueEntry);
+                        }
+                    });
+                }
+            });
+
+            // Build request in backend format
+            const request = {
+                templateId: parseInt(templateId!),
+                machineId: machineId ? parseInt(machineId) : null,
+                headerData: {
+                    submittedAt: new Date().toISOString(),
+                    totalFields: progress.total,
+                    filledFields: progress.filled
+                },
+                values: valuesArray
+            };
+
+            await recordApi.create(request);
+
+            // Clear draft
+            localStorage.removeItem(`qc_draft_${templateId}_${machineId}`);
+            setSubmitted(true);
+
+            setTimeout(() => navigate('/dashboard'), 2000);
+        } catch (error) {
+            console.error('Submit error:', error);
+            alert('Kayıt gönderilemedi!');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Open sample panel
+    const openSamplePanel = (sectionId: number, sampleNum: number) => {
+        setSelectedSectionId(sectionId);
+        setSelectedSampleNum(sampleNum);
+    };
+
+    // Close sample panel
+    const closeSamplePanel = () => {
+        setSelectedSectionId(null);
+        setSelectedSampleNum(null);
+    };
+
+    // Navigate between samples
+    const navigateSample = (direction: 'prev' | 'next') => {
+        if (!selectedSectionId || !selectedSampleNum) return;
+        const section = template?.sections.find(s => s.id === selectedSectionId);
+        if (!section || !section.repeatCount) return;
+
+        const newNum = direction === 'prev' ? selectedSampleNum - 1 : selectedSampleNum + 1;
+        if (newNum >= 1 && newNum <= section.repeatCount) {
+            setSelectedSampleNum(newNum);
+        }
+    };
+
+    // Get current section and sample
+    const activeSection = selectedSectionId ? template?.sections.find(s => s.id === selectedSectionId) : null;
+    const isPanelOpen = selectedSectionId !== null && selectedSampleNum !== null && activeSection !== null;
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    // Success state
+    if (submitted) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
+                <div className="text-center text-white">
+                    <CheckCircle size={64} className="mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold">{t.qcEntry.success}</h2>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (!template || !template.sections?.length) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <AlertCircle size={48} className="text-red-500 mb-4" />
+                <p>Şablon bulunamadı</p>
+            </div>
+        );
+    }
+
+    const progress = getProgress();
+    const progressPercent = progress.total > 0 ? Math.round((progress.filled / progress.total) * 100) : 0;
+
+    // Separate repeatable and non-repeatable sections
+    const nonRepeatableSections = template.sections.filter(s => !s.isRepeatable || !s.repeatCount || s.repeatCount <= 1);
+    const repeatableSections = template.sections.filter(s => s.isRepeatable && s.repeatCount && s.repeatCount > 1);
+
+    return (
+        <div className="min-h-screen bg-[var(--color-bg)] flex flex-col">
+            {/* Confirmation Modals */}
+            <ConfirmModal
+                show={showBackConfirm}
+                title="Çıkmak istediğinize emin misiniz?"
+                message="Girdiğiniz veriler otomatik olarak kaydedildi."
+                onConfirm={() => navigate('/dashboard')}
+                onCancel={() => setShowBackConfirm(false)}
+                confirmText="Çık"
+                confirmColor="red"
+            />
+            <ConfirmModal
+                show={showSubmitConfirm}
+                title="Kayıtları göndermek istiyor musunuz?"
+                message={`${progress.filled} / ${progress.total} alan dolduruldu.`}
+                onConfirm={handleSubmit}
+                onCancel={() => setShowSubmitConfirm(false)}
+                confirmText="Gönder"
+                confirmColor="teal"
+            />
+
+            {/* Header */}
+            <header className="bg-gradient-to-r from-teal-600 to-emerald-500 text-white px-4 py-3 sticky top-0 z-20 shadow-lg">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button onClick={handleBack} className="p-2 bg-white/20 rounded-lg">
+                            <ArrowLeft size={22} />
+                        </button>
+                        <div>
+                            <h1 className="font-bold text-lg">{template.name}</h1>
+                            <p className="text-sm opacity-80">%{progressPercent} tamamlandı</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setShowSubmitConfirm(true)}
+                        disabled={submitting}
+                        className="flex items-center gap-2 px-4 py-2 bg-white text-teal-600 rounded-lg font-medium shadow"
+                    >
+                        <Send size={18} />
+                        {submitting ? 'Gönderiliyor...' : 'Gönder'}
+                    </button>
+                </div>
+                {/* Progress bar */}
+                <div className="mt-3 h-2 bg-white/30 rounded-full overflow-hidden">
+                    <div className="h-full bg-white transition-all" style={{ width: `${progressPercent}%` }} />
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="flex-1 p-4 space-y-6">
+                {/* Non-repeatable sections */}
+                {nonRepeatableSections.map(section => (
+                    <section key={section.id} className="bg-[var(--color-surface)] rounded-xl shadow-sm p-4 border border-[var(--color-border)]">
+                        <h2 className="text-lg font-bold text-[var(--color-text)] mb-4">{section.name}</h2>
+                        <div className="space-y-4">
+                            {section.fields.map(field => {
+                                const inputType = (field.inputType || '').toUpperCase();
+                                const selectOptions = field.options
+                                    ? (Array.isArray(field.options)
+                                        ? field.options
+                                        : field.options.split(/[\n,]/).map(o => o.trim()).filter(o => o))
+                                    : [];
+
+                                return (
+                                    <div key={field.id} className="space-y-2">
+                                        <label className="font-medium text-[var(--color-text)]">{field.label}</label>
+
+                                        {/* Boolean / Pass-Fail types */}
+                                        {(inputType === 'PASS_FAIL' || inputType === 'PASSFAIL' || inputType === 'BOOLEAN') && (
+                                            <PassFailButton
+                                                value={values[field.fieldKey] ?? null}
+                                                onChange={(v) => updateValue(field.fieldKey, v)}
+                                                labels={{ yes: t.common.yes, no: t.common.no }}
+                                            />
+                                        )}
+
+                                        {/* Numeric types */}
+                                        {(inputType === 'NUMERIC' || inputType === 'NUMBER' || inputType === 'DECIMAL') && (
+                                            <NumericInput
+                                                value={values[field.fieldKey] ?? ''}
+                                                onChange={(v) => updateValue(field.fieldKey, v)}
+                                                field={field}
+                                            />
+                                        )}
+
+                                        {/* Text type */}
+                                        {inputType === 'TEXT' && (
+                                            <textarea
+                                                value={values[field.fieldKey] ?? ''}
+                                                onChange={(e) => updateValue(field.fieldKey, e.target.value)}
+                                                placeholder="Açıklama girin..."
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-[var(--color-border)] focus:border-teal-500 resize-none bg-[var(--color-surface)] text-[var(--color-text)]"
+                                                rows={3}
+                                            />
+                                        )}
+
+                                        {/* Select type - dropdown */}
+                                        {inputType === 'SELECT' && selectOptions.length > 0 && (
+                                            <select
+                                                value={values[field.fieldKey] ?? ''}
+                                                onChange={(e) => updateValue(field.fieldKey, e.target.value)}
+                                                className="ios-select w-full"
+                                            >
+                                                <option value="">{t.qcEntry.selectOption}</option>
+                                                {selectOptions.map((opt, i) => (
+                                                    <option key={i} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        )}
+
+                                        {/* Fallback for unknown types */}
+                                        {!['PASS_FAIL', 'PASSFAIL', 'BOOLEAN', 'NUMERIC', 'NUMBER', 'DECIMAL', 'TEXT', 'SELECT', 'PHOTO', 'SIGNATURE'].includes(inputType) && (
+                                            <PassFailButton
+                                                value={values[field.fieldKey] ?? null}
+                                                onChange={(v) => updateValue(field.fieldKey, v)}
+                                                labels={{ yes: t.common.yes, no: t.common.no }}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                ))}
+
+                {/* Repeatable sections */}
+                {repeatableSections.map(section => (
+                    <section key={section.id} className="bg-[var(--color-surface)] rounded-xl shadow-sm p-4 border border-[var(--color-border)]">
+                        <h2 className="text-lg font-bold text-[var(--color-text)] mb-2">{section.name}</h2>
+                        <p className="text-sm text-[var(--color-text-secondary)] mb-4">{section.repeatCount} {t.qcEntry.samples}</p>
+
+                        {/* Sample buttons grid */}
+                        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
+                            {Array.from({ length: section.repeatCount! }, (_, i) => i + 1).map(num => {
+                                const status = getSampleStatus(section.id, num);
+                                const isSelected = selectedSectionId === section.id && selectedSampleNum === num;
+
+                                let btnClass = 'bg-[var(--color-surface-hover)] text-[var(--color-text)] border border-[var(--color-border)] hover:border-teal-400';
+                                if (isSelected) btnClass = 'bg-teal-500 text-white ring-2 ring-teal-300 scale-110 z-10';
+                                else if (status === 'passed') btnClass = 'bg-green-500 text-white';
+                                else if (status === 'failed') btnClass = 'bg-red-500 text-white';
+                                else if (status === 'partial') btnClass = 'bg-amber-400/30 text-amber-700 border border-amber-400';
+
+                                return (
+                                    <button
+                                        key={num}
+                                        type="button"
+                                        onClick={() => openSamplePanel(section.id, num)}
+                                        className={`relative h-10 rounded-lg font-bold text-sm transition-all ${btnClass}`}
+                                    >
+                                        {num}
+                                        {status === 'passed' && <Check size={10} className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-0.5" />}
+                                        {status === 'failed' && <X size={10} className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-0.5" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex flex-wrap gap-3 mt-4 text-xs text-gray-500">
+                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-500 rounded" /> Geçti</span>
+                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-500 rounded" /> Kaldı</span>
+                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-400/50 border border-amber-400 rounded" /> Kısmen</span>
+                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gray-100 border border-gray-300 rounded" /> Boş</span>
+                        </div>
+                    </section>
+                ))}
+            </main>
+
+            {/* Sample Detail Panel (Slide-in from right) */}
+            {isPanelOpen && activeSection && selectedSampleNum && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 bg-black/40 z-30"
+                        onClick={closeSamplePanel}
+                    />
+
+                    {/* Panel */}
+                    <div className="fixed top-0 right-0 h-full w-full sm:w-96 bg-[var(--color-surface)] shadow-2xl z-40 flex flex-col animate-slide-in-right">
+                        {/* Panel Header */}
+                        <div className="bg-gradient-to-r from-teal-600 to-emerald-500 text-white p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => navigateSample('prev')}
+                                    disabled={selectedSampleNum <= 1}
+                                    className="p-2 bg-white/20 rounded-lg disabled:opacity-30"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <div className="text-center">
+                                    <h3 className="font-bold text-lg">Numune {selectedSampleNum}</h3>
+                                    <p className="text-sm opacity-80">{activeSection.name}</p>
+                                </div>
+                                <button
+                                    onClick={() => navigateSample('next')}
+                                    disabled={selectedSampleNum >= (activeSection.repeatCount || 1)}
+                                    className="p-2 bg-white/20 rounded-lg disabled:opacity-30"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                            <button onClick={closeSamplePanel} className="p-2 bg-white/20 rounded-lg">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Panel Content */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--color-bg)]">
+                            {activeSection.fields.map(field => {
+                                const key = `${field.fieldKey}_sample_${selectedSampleNum}`;
+                                const inputType = (field.inputType || '').toUpperCase();
+
+                                // Parse options for SELECT type - handle both array and string formats
+                                const selectOptions = field.options
+                                    ? (Array.isArray(field.options)
+                                        ? field.options
+                                        : field.options.split(/[\n,]/).map(o => o.trim()).filter(o => o))
+                                    : [];
+
+                                return (
+                                    <div key={field.id} className="space-y-2">
+                                        <label className="font-medium text-[var(--color-text)]">{field.label}</label>
+
+                                        {/* Boolean / Pass-Fail types */}
+                                        {(inputType === 'PASS_FAIL' || inputType === 'PASSFAIL' || inputType === 'BOOLEAN') && (
+                                            <PassFailButton
+                                                value={values[key] ?? null}
+                                                onChange={(v) => updateValue(key, v)}
+                                                labels={{ yes: t.common.yes, no: t.common.no }}
+                                            />
+                                        )}
+
+                                        {/* Numeric types */}
+                                        {(inputType === 'NUMERIC' || inputType === 'NUMBER' || inputType === 'DECIMAL') && (
+                                            <NumericInput
+                                                value={values[key] ?? ''}
+                                                onChange={(v) => updateValue(key, v)}
+                                                field={field}
+                                            />
+                                        )}
+
+                                        {/* Text type */}
+                                        {inputType === 'TEXT' && (
+                                            <textarea
+                                                value={values[key] ?? ''}
+                                                onChange={(e) => updateValue(key, e.target.value)}
+                                                placeholder={t.qcEntry.enterNote}
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-[var(--color-border)] focus:border-teal-500 resize-none bg-[var(--color-surface)] text-[var(--color-text)]"
+                                                rows={3}
+                                            />
+                                        )}
+
+                                        {/* Select type - dropdown */}
+                                        {inputType === 'SELECT' && selectOptions.length > 0 && (
+                                            <select
+                                                value={values[key] ?? ''}
+                                                onChange={(e) => updateValue(key, e.target.value)}
+                                                className="ios-select w-full"
+                                            >
+                                                <option value="">{t.qcEntry.selectOption}</option>
+                                                {selectOptions.map((opt, i) => (
+                                                    <option key={i} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        )}
+
+                                        {/* Fallback for unknown types without options - show as pass/fail */}
+                                        {!['PASS_FAIL', 'PASSFAIL', 'BOOLEAN', 'NUMERIC', 'NUMBER', 'DECIMAL', 'TEXT', 'SELECT', 'PHOTO', 'SIGNATURE'].includes(inputType) && (
+                                            <PassFailButton
+                                                value={values[key] ?? null}
+                                                onChange={(v) => updateValue(key, v)}
+                                                labels={{ yes: t.common.yes, no: t.common.no }}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Panel Footer */}
+                        <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
+                            <button
+                                onClick={closeSamplePanel}
+                                className="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl font-medium hover:from-teal-600 hover:to-emerald-600 transition-all"
+                            >
+                                {t.common.ok}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Animation styles */}
+            <style>{`
+                @keyframes slide-in-right {
+                    from { transform: translateX(100%); }
+                    to { transform: translateX(0); }
+                }
+                .animate-slide-in-right {
+                    animation: slide-in-right 0.3s ease-out;
+                }
+            `}</style>
+        </div>
+    );
+}

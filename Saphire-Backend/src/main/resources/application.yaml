@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: Saphire
+
+  # Database
+  datasource:
+    url: jdbc:postgresql://localhost:5434/production_system
+    username: vacanza_master
+    password: vacanza_password
+    driver-class-name: org.postgresql.Driver
+
+  # JPA & Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: none  # Flyway manages all schema changes
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Flyway Database Migrations
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
+  # Jackson (JSON)
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Europe/Istanbul
+
+# Server
+server:
+  port: 8080
+
+# JWT Config
+jwt:
+  secret: ee5ddc7600da0fc86d4bb16f5b3b4862c47c210bbb9f2c854e9b04cf9cfb6de3
+  expiration: 28800000  # 8 saat (milisaniye)
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.crownbyte.saphire: DEBUG
+    org.hibernate.SQL: DEBUG
