@@ -1,30 +1,9 @@
 # ===========================================
 # Saphire Backend - Docker Compose
-# PostgreSQL + Spring Boot Backend
+# Sadece Backend (PostgreSQL ayrı container'da)
 # ===========================================
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: saphire-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-saphire_system}
-      POSTGRES_USER: ${DB_USERNAME:-saphire_master}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-saphire_password}
-    ports:
-      - "5434:5432"
-    volumes:
-      - saphire_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-saphire_master} -d ${DB_NAME:-saphire_system}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - saphire-network
-
   # Spring Boot Backend
   backend:
     build:
@@ -32,13 +11,12 @@ services:
       dockerfile: Dockerfile
     container_name: saphire-backend
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+    env_file:
+      - .env
     environment:
-      # Database
-      DB_HOST: postgres
-      DB_PORT: 5432
+      # Database - host.docker.internal ile host'taki PostgreSQL'e bağlan
+      DB_HOST: host.docker.internal
+      DB_PORT: ${DB_PORT:-5434}
       DB_NAME: ${DB_NAME:-saphire_system}
       DB_USERNAME: ${DB_USERNAME:-saphire_master}
       DB_PASSWORD: ${DB_PASSWORD:-saphire_password}
@@ -54,13 +32,5 @@ services:
       LOG_LEVEL_APP: ${LOG_LEVEL_APP:-DEBUG}
     ports:
       - "8080:8080"
-    networks:
-      - saphire-network
-
-volumes:
-  saphire_pgdata:
-    driver: local
-
-networks:
-  saphire-network:
-    driver: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
