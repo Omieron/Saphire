@@ -1,0 +1,34 @@
+# Build outputs
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment (keep secrets out of image)
+.env
+.env.*
+
+# Documentation
+*.md
+!README.md
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar

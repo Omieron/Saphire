@@ -1,0 +1,66 @@
+# ===========================================
+# Saphire Backend - Docker Compose
+# PostgreSQL + Spring Boot Backend
+# ===========================================
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: saphire-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-saphire_system}
+      POSTGRES_USER: ${DB_USERNAME:-saphire_master}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-saphire_password}
+    ports:
+      - "5434:5432"
+    volumes:
+      - saphire_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-saphire_master} -d ${DB_NAME:-saphire_system}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - saphire-network
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: saphire-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-saphire_system}
+      DB_USERNAME: ${DB_USERNAME:-saphire_master}
+      DB_PASSWORD: ${DB_PASSWORD:-saphire_password}
+      # Server
+      SERVER_PORT: 8080
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-ee5ddc7600da0fc86d4bb16f5b3b4862c47c210bbb9f2c854e9b04cf9cfb6de3}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-28800000}
+      # Timezone
+      TIMEZONE: ${TIMEZONE:-Europe/Istanbul}
+      # Logging
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:-DEBUG}
+    ports:
+      - "8080:8080"
+    networks:
+      - saphire-network
+
+volumes:
+  saphire_pgdata:
+    driver: local
+
+networks:
+  saphire-network:
+    driver: bridge

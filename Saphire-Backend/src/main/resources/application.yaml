@@ -4,16 +4,16 @@ spring:
 
   # Database
   datasource:
-    url: jdbc:postgresql://localhost:5434/production_system
-    username: vacanza_master
-    password: vacanza_password
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5434}/${DB_NAME:saphire_system}
+    username: ${DB_USERNAME:saphire_master}
+    password: ${DB_PASSWORD:saphire_password}
     driver-class-name: org.postgresql.Driver
 
   # JPA & Hibernate
   jpa:
     hibernate:
-      ddl-auto: none  # Flyway manages all schema changes
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:none}
+    show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:
         format_sql: true
@@ -21,8 +21,8 @@ spring:
 
   # Flyway Database Migrations
   flyway:
-    enabled: true
-    baseline-on-migrate: true
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
     baseline-version: 0
     locations: classpath:db/migration
 
@@ -30,20 +30,20 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
-    time-zone: Europe/Istanbul
+    time-zone: ${TIMEZONE:Europe/Istanbul}
 
 # Server
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 # JWT Config
 jwt:
-  secret: ee5ddc7600da0fc86d4bb16f5b3b4862c47c210bbb9f2c854e9b04cf9cfb6de3
-  expiration: 28800000  # 8 saat (milisaniye)
+  secret: ${JWT_SECRET:ee5ddc7600da0fc86d4bb16f5b3b4862c47c210bbb9f2c854e9b04cf9cfb6de3}
+  expiration: ${JWT_EXPIRATION:28800000}
 
 # Logging
 logging:
   level:
-    root: INFO
-    com.crownbyte.saphire: DEBUG
-    org.hibernate.SQL: DEBUG
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.crownbyte.saphire: ${LOG_LEVEL_APP:DEBUG}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:DEBUG}
