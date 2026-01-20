@@ -5,7 +5,15 @@ import type { Location, LocationRequest } from '../../api/location.api';
 import { companyApi } from '../../api/company.api';
 import type { Company } from '../../api/company.api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import Toast from '../../components/Toast/Toast';
+import PageTour from '../../components/PageTour/PageTour';
 
+const PAGE_TOUR_STEPS = [
+    { id: 'search', targetSelector: '[data-tour="locations-search"]', titleKey: 'search', descKey: 'search', position: 'bottom' as const },
+    { id: 'filter', targetSelector: '[data-tour="locations-filter"]', titleKey: 'filter', descKey: 'filter', position: 'bottom' as const },
+    { id: 'add', targetSelector: '[data-tour="locations-add"]', titleKey: 'add', descKey: 'add', position: 'left' as const },
+];
 export default function Locations() {
     const { t } = useLanguage();
     const [locations, setLocations] = useState<Location[]>([]);
@@ -17,6 +25,17 @@ export default function Locations() {
     const [editItem, setEditItem] = useState<Location | null>(null);
     const [formData, setFormData] = useState<LocationRequest>({ companyId: 0, name: '', code: '', address: '', active: true });
     const [saving, setSaving] = useState(false);
+
+    // Delete confirmation state
+    const [deleteTarget, setDeleteTarget] = useState<Location | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Toast state
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+        show: false,
+        message: '',
+        type: 'success',
+    });
 
     const fetchData = async () => {
         try {
@@ -44,9 +63,24 @@ export default function Locations() {
         setShowModal(true);
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm(t.common.confirm)) return;
-        try { await locationApi.delete(id); fetchData(); } catch (error) { console.error('Failed to delete:', error); }
+    const handleDeleteClick = (item: Location) => {
+        setDeleteTarget(item);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            await locationApi.delete(deleteTarget.id);
+            setDeleteTarget(null);
+            setToast({ show: true, message: t.common.recordDeleted, type: 'success' });
+            fetchData();
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            setToast({ show: true, message: 'Silme işlemi başarısız oldu!', type: 'error' });
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -71,18 +105,19 @@ export default function Locations() {
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
-                    <div className="relative">
+                    <div className="relative" data-tour="locations-search">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
                         <input type="text" placeholder={t.locations.searchLocations} value={search} onChange={(e) => setSearch(e.target.value)}
                             className="pl-10 pr-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64" />
                     </div>
                     <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value === '' ? '' : Number(e.target.value))}
+                        data-tour="locations-filter"
                         className="px-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
                         <option value="">{t.locations.allCompanies}</option>
                         {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
-                <button onClick={handleAdd} className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
+                <button onClick={handleAdd} data-tour="locations-add" className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
                     <Plus size={18} />{t.locations.addLocation}
                 </button>
             </div>
@@ -122,7 +157,7 @@ export default function Locations() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <button onClick={() => handleEdit(loc)} className="p-2 text-[var(--color-text-secondary)] hover:text-teal-500 hover:bg-teal-500/10 rounded-lg transition-colors"><Pencil size={16} /></button>
-                                        <button onClick={() => handleDelete(loc.id)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
+                                        <button onClick={() => handleDeleteClick(loc)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
                                     </td>
                                 </tr>
                             ))
@@ -140,23 +175,26 @@ export default function Locations() {
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.locations.company}</label>
                                 <select value={formData.companyId} onChange={(e) => setFormData({ ...formData, companyId: Number(e.target.value) })}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" required>
-                                    <option value="">{t.locations.company}</option>
+                                    <option value="">{t.common.selectCompany}</option>
                                     {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.common.name}</label>
                                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder={t.common.enterName}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.common.code}</label>
                                 <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                                    placeholder={t.common.enterCode}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.locations.address}</label>
                                 <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    placeholder={t.common.enterAddress}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" rows={2} />
                             </div>
                             <div className="flex items-center gap-2">
@@ -171,6 +209,36 @@ export default function Locations() {
                     </div>
                 </div>
             )}
+
+            {/* Page Tour */}
+            <PageTour
+                pageName="locations"
+                steps={PAGE_TOUR_STEPS}
+                translations={{
+                    search: { title: 'Lokasyon Ara', desc: 'Lokasyonları isim veya kod ile arayabilirsiniz.' },
+                    filter: { title: 'Şirkete Göre Filtrele', desc: 'Lokasyonları şirkete göre filtreleyebilirsiniz.' },
+                    add: { title: 'Yeni Lokasyon', desc: 'Sisteme yeni lokasyon eklemek için tıklayın.' },
+                }}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDeleteConfirm}
+                title={t.common.deleteConfirm}
+                message={t.common.deleteMessage}
+                loading={deleting}
+            />
+
+            {/* Success/Error Toast */}
+            <Toast
+                isOpen={toast.show}
+                onClose={() => setToast({ ...toast, show: false })}
+                message={toast.message}
+                type={toast.type}
+                duration={3000}
+            />
         </div>
     );
 }

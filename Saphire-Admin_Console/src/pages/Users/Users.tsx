@@ -4,7 +4,13 @@ import { userApi } from '../../api/user.api';
 import type { UserRequest } from '../../api/user.api';
 import type { User } from '../../api/auth.api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import PageTour from '../../components/PageTour/PageTour';
 
+const PAGE_TOUR_STEPS = [
+    { id: 'search', targetSelector: '[data-tour="users-search"]', titleKey: 'search', descKey: 'search', position: 'bottom' as const },
+    { id: 'filter', targetSelector: '[data-tour="users-filter"]', titleKey: 'filter', descKey: 'filter', position: 'bottom' as const },
+    { id: 'add', targetSelector: '[data-tour="users-add"]', titleKey: 'add', descKey: 'add', position: 'left' as const },
+];
 const roleColors: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
     ADMIN: { bg: 'bg-purple-500/10', text: 'text-purple-500', icon: Shield },
     SUPERVISOR: { bg: 'bg-blue-500/10', text: 'text-blue-500', icon: Eye },
@@ -67,12 +73,13 @@ export default function Users() {
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
-                    <div className="relative">
+                    <div className="relative" data-tour="users-search">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
                         <input type="text" placeholder={t.users.searchUsers} value={search} onChange={(e) => setSearch(e.target.value)}
                             className="pl-10 pr-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64" />
                     </div>
                     <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}
+                        data-tour="users-filter"
                         className="px-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
                         <option value="">{t.users.allRoles}</option>
                         <option value="ADMIN">{t.users.roleAdmin}</option>
@@ -80,7 +87,7 @@ export default function Users() {
                         <option value="OPERATOR">{t.users.roleOperator}</option>
                     </select>
                 </div>
-                <button onClick={handleAdd} className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
+                <button onClick={handleAdd} data-tour="users-add" className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
                     <Plus size={18} />{t.users.addUser}
                 </button>
             </div>
@@ -141,6 +148,7 @@ export default function Users() {
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.auth.username}</label>
                                 <input type="text" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                    placeholder={t.auth.enterUsername}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono" required />
                             </div>
                             <div>
@@ -148,16 +156,19 @@ export default function Users() {
                                     {t.auth.password} {editItem && <span className="text-xs text-[var(--color-text-secondary)]">{t.users.passwordHint}</span>}
                                 </label>
                                 <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    placeholder={t.auth.enterPassword}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" required={!editItem} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.users.fullName}</label>
                                 <input type="text" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                    placeholder={t.common.enterName}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.users.email}</label>
                                 <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    placeholder={t.common.enterEmail}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" required />
                             </div>
                             <div>
@@ -181,6 +192,17 @@ export default function Users() {
                     </div>
                 </div>
             )}
+
+            {/* Page Tour */}
+            <PageTour
+                pageName="users"
+                steps={PAGE_TOUR_STEPS}
+                translations={{
+                    search: { title: 'Kullanıcı Ara', desc: 'Kullanıcıları isim veya e-posta ile arayabilirsiniz.' },
+                    filter: { title: 'Role Göre Filtrele', desc: 'Kullanıcıları rolüne göre filtreleyebilirsiniz.' },
+                    add: { title: 'Yeni Kullanıcı', desc: 'Sisteme yeni kullanıcı eklemek için tıklayın.' },
+                }}
+            />
         </div>
     );
 }

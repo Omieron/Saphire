@@ -5,7 +5,14 @@ import type { Machine, MachineRequest } from '../../api/machine.api';
 import { locationApi } from '../../api/location.api';
 import type { Location } from '../../api/location.api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import Toast from '../../components/Toast/Toast';
+import PageTour from '../../components/PageTour/PageTour';
 
+const PAGE_TOUR_STEPS = [
+    { id: 'search', targetSelector: '[data-tour="machines-search"]', titleKey: 'search', descKey: 'search', position: 'bottom' as const },
+    { id: 'add', targetSelector: '[data-tour="machines-add"]', titleKey: 'add', descKey: 'add', position: 'left' as const },
+];
 const statusColors: Record<string, { bg: string; text: string }> = {
     IDLE: { bg: 'bg-slate-500/10', text: 'text-slate-500' },
     RUNNING: { bg: 'bg-green-500/10', text: 'text-green-500' },
@@ -26,6 +33,17 @@ export default function Machines() {
     const [editItem, setEditItem] = useState<Machine | null>(null);
     const [formData, setFormData] = useState<MachineRequest>({ locationId: 0, code: '', name: '', type: '', active: true, maintenanceMode: false });
     const [saving, setSaving] = useState(false);
+
+    // Delete confirmation state
+    const [deleteTarget, setDeleteTarget] = useState<Machine | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Toast state
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+        show: false,
+        message: '',
+        type: 'success',
+    });
 
     const fetchData = async () => {
         try {
@@ -50,9 +68,24 @@ export default function Machines() {
         setShowModal(true);
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm(t.common.confirm)) return;
-        try { await machineApi.delete(id); fetchData(); } catch (error) { console.error('Failed to delete:', error); }
+    const handleDeleteClick = (item: Machine) => {
+        setDeleteTarget(item);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            await machineApi.delete(deleteTarget.id);
+            setDeleteTarget(null);
+            setToast({ show: true, message: t.common.recordDeleted, type: 'success' });
+            fetchData();
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            setToast({ show: true, message: 'Silme işlemi başarısız oldu!', type: 'error' });
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const handleToggleMaintenance = async (machine: Machine) => {
@@ -82,7 +115,7 @@ export default function Machines() {
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
-                    <div className="relative">
+                    <div className="relative" data-tour="machines-search">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
                         <input type="text" placeholder={t.machines.searchMachines} value={search} onChange={(e) => setSearch(e.target.value)}
                             className="pl-10 pr-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64" />
@@ -93,7 +126,7 @@ export default function Machines() {
                         {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                     </select>
                 </div>
-                <button onClick={handleAdd} className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
+                <button onClick={handleAdd} data-tour="machines-add" className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
                     <Plus size={18} />{t.machines.addMachine}
                 </button>
             </div>
@@ -146,7 +179,7 @@ export default function Machines() {
                                         <td className="px-6 py-4 text-right">
                                             <button onClick={() => handleToggleMaintenance(machine)} className={`p-2 rounded-lg transition-colors ${machine.maintenanceMode ? 'text-yellow-500 hover:bg-yellow-500/10' : 'text-[var(--color-text-secondary)] hover:text-yellow-500 hover:bg-yellow-500/10'}`} title={t.machines.maintenanceMode}><Wrench size={16} /></button>
                                             <button onClick={() => handleEdit(machine)} className="p-2 text-[var(--color-text-secondary)] hover:text-teal-500 hover:bg-teal-500/10 rounded-lg transition-colors"><Pencil size={16} /></button>
-                                            <button onClick={() => handleDelete(machine.id)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
+                                            <button onClick={() => handleDeleteClick(machine)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 );
@@ -165,18 +198,20 @@ export default function Machines() {
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.machines.location}</label>
                                 <select value={formData.locationId} onChange={(e) => setFormData({ ...formData, locationId: Number(e.target.value) })}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" required>
-                                    <option value="">{t.machines.location}</option>
+                                    <option value="">{t.common.selectLocation}</option>
                                     {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.common.name}</label>
                                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder={t.common.enterName}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t.common.code}</label>
                                 <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                                    placeholder={t.common.enterCode}
                                     className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono" required />
                             </div>
                             <div>
@@ -202,6 +237,35 @@ export default function Machines() {
                     </div>
                 </div>
             )}
+
+            {/* Page Tour */}
+            <PageTour
+                pageName="machines"
+                steps={PAGE_TOUR_STEPS}
+                translations={{
+                    search: { title: 'Makine Ara', desc: 'Makineleri isim veya kod ile arayabilirsiniz.' },
+                    add: { title: 'Yeni Makine', desc: 'Sisteme yeni makine eklemek için tıklayın.' },
+                }}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDeleteConfirm}
+                title={t.common.deleteConfirm}
+                message={t.common.deleteMessage}
+                loading={deleting}
+            />
+
+            {/* Success/Error Toast */}
+            <Toast
+                isOpen={toast.show}
+                onClose={() => setToast({ ...toast, show: false })}
+                message={toast.message}
+                type={toast.type}
+                duration={3000}
+            />
         </div>
     );
 }

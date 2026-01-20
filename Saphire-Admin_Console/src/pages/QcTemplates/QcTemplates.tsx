@@ -5,6 +5,13 @@ import { productApi, type Product } from '../../api/product.api';
 import { machineApi, type Machine } from '../../api/machine.api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Tooltip from '../../components/Tooltip/Tooltip';
+import PageTour from '../../components/PageTour/PageTour';
+
+// Page tour steps for templates list
+const LIST_TOUR_STEPS = [
+    { id: 'search', targetSelector: '[data-tour="qc-search"]', titleKey: 'search', descKey: 'search', position: 'bottom' as const },
+    { id: 'add', targetSelector: '[data-tour="qc-add"]', titleKey: 'add', descKey: 'add', position: 'left' as const },
+];
 
 // Input type options matching backend enum
 const INPUT_TYPES = [
@@ -281,7 +288,7 @@ export default function QcTemplates() {
         return (
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="relative w-full sm:w-auto">
+                    <div className="relative w-full sm:w-auto" data-tour="qc-search">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
                         <input
                             type="text"
@@ -293,6 +300,7 @@ export default function QcTemplates() {
                     </div>
                     <button
                         onClick={handleAddTemplate}
+                        data-tour="qc-add"
                         className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors text-sm whitespace-nowrap"
                     >
                         <Plus size={16} />{t.qcTemplates.addTemplate}
@@ -381,7 +389,17 @@ export default function QcTemplates() {
                         </tbody>
                     </table>
                 </div>
-            </div>
+
+                {/* Page Tour */}
+                <PageTour
+                    pageName="qc-templates"
+                    steps={LIST_TOUR_STEPS}
+                    translations={{
+                        search: { title: 'Şablon Ara', desc: 'QC şablonlarını isim veya kod ile arayabilirsiniz.' },
+                        add: { title: 'Yeni Şablon', desc: 'Yeni bir kalite kontrol şablonu oluşturmak için tıklayın.' },
+                    }}
+                />
+            </div >
         );
     }
 
@@ -392,9 +410,6 @@ export default function QcTemplates() {
                 <h2 className="text-2xl font-bold text-[var(--color-text)]">
                     {editingTemplate ? t.qcTemplates.editTemplate : t.qcTemplates.addTemplate}
                 </h2>
-                <button onClick={() => setShowBuilder(false)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)]">
-                    ← {t.common.cancel}
-                </button>
             </div>
 
             <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 space-y-6">
@@ -648,7 +663,10 @@ export default function QcTemplates() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm text-[var(--color-text-secondary)] mb-1.5">{t.qcTemplates.maxValue}</label>
+                                                <label className="flex items-center gap-1 text-sm text-[var(--color-text-secondary)] mb-1.5">
+                                                    {t.qcTemplates.maxValue}
+                                                    <Tooltip text={(t.qcTemplates as Record<string, string>).tooltipMinMax} position="bottom" />
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={fieldForm.maxValue}

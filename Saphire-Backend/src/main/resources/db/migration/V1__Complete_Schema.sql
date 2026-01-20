@@ -16,9 +16,10 @@ CREATE TABLE IF NOT EXISTS companies (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Locations
+-- Locations (company_id nullable for backward compatibility)
 CREATE TABLE IF NOT EXISTS locations (
     id BIGSERIAL PRIMARY KEY,
+    company_id BIGINT REFERENCES companies(id),
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     address TEXT,
@@ -66,32 +67,11 @@ CREATE TABLE IF NOT EXISTS machines (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Machine Status
-CREATE TABLE IF NOT EXISTS machine_statuses (
-    id BIGSERIAL PRIMARY KEY,
-    machine_id BIGINT UNIQUE NOT NULL REFERENCES machines(id),
-    status VARCHAR(50),
-    current_product_instance_id BIGINT,
-    last_updated TIMESTAMP DEFAULT NOW()
-);
-
 -- =====================================================
 -- PRODUCTION TABLES
 -- =====================================================
 
--- Product Instances
-CREATE TABLE IF NOT EXISTS product_instances (
-    id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES products(id),
-    batch_number VARCHAR(100),
-    serial_number VARCHAR(100) UNIQUE,
-    quantity INTEGER DEFAULT 1,
-    status VARCHAR(50) DEFAULT 'PENDING',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Product Routes
+-- Product Routes (must be before product_instances)
 CREATE TABLE IF NOT EXISTS product_routes (
     id BIGSERIAL PRIMARY KEY,
     product_id BIGINT NOT NULL REFERENCES products(id),
@@ -100,6 +80,37 @@ CREATE TABLE IF NOT EXISTS product_routes (
     version INTEGER DEFAULT 1,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Product Instances (all columns from entity)
+CREATE TABLE IF NOT EXISTS product_instances (
+    id BIGSERIAL PRIMARY KEY,
+    product_id BIGINT NOT NULL REFERENCES products(id),
+    route_id BIGINT NOT NULL REFERENCES product_routes(id),
+    location_id BIGINT NOT NULL REFERENCES locations(id),
+    serial_number VARCHAR(100) UNIQUE,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    priority INTEGER DEFAULT 3,
+    due_date TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_by BIGINT REFERENCES users(id),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Machine Status (correct table name matching entity)
+CREATE TABLE IF NOT EXISTS machine_status (
+    id BIGSERIAL PRIMARY KEY,
+    machine_id BIGINT UNIQUE NOT NULL REFERENCES machines(id),
+    current_status VARCHAR(50) NOT NULL DEFAULT 'IDLE',
+    current_instance_id BIGINT REFERENCES product_instances(id),
+    current_step_id BIGINT,
+    current_operator_id BIGINT REFERENCES users(id),
+    status_since TIMESTAMP NOT NULL DEFAULT NOW(),
+    estimated_finish_at TIMESTAMP,
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -114,6 +125,11 @@ CREATE TABLE IF NOT EXISTS product_route_steps (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Add FK constraint for current_step_id after product_route_steps exists
+ALTER TABLE machine_status 
+    ADD CONSTRAINT fk_machine_status_step 
+    FOREIGN KEY (current_step_id) REFERENCES product_route_steps(id);
 
 -- Route Step Machines
 CREATE TABLE IF NOT EXISTS route_step_machines (
@@ -288,6 +304,9 @@ CREATE TABLE IF NOT EXISTS qc_form_values (
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_active ON users(active);
 
+-- Locations
+CREATE INDEX idx_locations_company ON locations(company_id);
+
 -- Machines
 CREATE INDEX idx_machines_location ON machines(location_id);
 CREATE INDEX idx_machines_active ON machines(active);
@@ -298,6 +317,8 @@ CREATE INDEX idx_products_active ON products(active);
 
 -- Product Instances
 CREATE INDEX idx_product_instances_product ON product_instances(product_id);
+CREATE INDEX idx_product_instances_route ON product_instances(route_id);
+CREATE INDEX idx_product_instances_location ON product_instances(location_id);
 CREATE INDEX idx_product_instances_status ON product_instances(status);
 
 -- Production Steps
@@ -305,6 +326,10 @@ CREATE INDEX idx_production_steps_instance ON production_steps(product_instance_
 CREATE INDEX idx_production_steps_machine ON production_steps(machine_id);
 CREATE INDEX idx_production_steps_operator ON production_steps(operator_id);
 CREATE INDEX idx_production_steps_status ON production_steps(status);
+
+-- Machine Status
+CREATE INDEX idx_machine_status_machine ON machine_status(machine_id);
+CREATE INDEX idx_machine_status_current_status ON machine_status(current_status);
 
 -- QC Templates
 CREATE INDEX idx_qc_templates_machine ON qc_form_templates(machine_id);
@@ -357,7 +382,13 @@ $$ LANGUAGE plpgsql;
 -- =====================================================
 
 INSERT INTO users (username, email, full_name, hashed_password, role)
-VALUES ('admin', 'admin@saphire.com', 'System Admin', '$2a$10$rS.F3tZ.wL1qVLqnxQKfKu7D9WZn3L5MWuF5W5V5W5V5W5V5W5V5W', 'ADMIN')
+VALUES ('admin', 'admin@saphire.com', 'System Admin', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Z81b5E.pL0VZCuzI5q6B2', 'ADMIN')
 ON CONFLICT (username) DO NOTHING;
 
-INSERT INTO locations (code, name) VALUES ('LOC001', 'Ana Tesis') ON CONFLICT (code) DO NOTHING;
+-- Default company
+INSERT INTO companies (code, name) VALUES ('SAPHIRE', 'Saphire Sirket') ON CONFLICT (code) DO NOTHING;
+
+-- Default location with company reference
+INSERT INTO locations (company_id, code, name) 
+SELECT c.id, 'LOC001', 'Ana Tesis' FROM companies c WHERE c.code = 'SAPHIRE'
+ON CONFLICT (code) DO NOTHING;

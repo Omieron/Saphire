@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+// Backend API Base URL - Raspberry Pi
+const API_BASE_URL = 'http://192.168.0.18:8080';
+
+// Configure axios defaults
+axios.defaults.baseURL = API_BASE_URL;
+
 // Machine API
 export const machineApi = {
     getAll: () => axios.get('/api/v1/machines'),
@@ -24,3 +30,4 @@ export const productApi = {
     getAll: () => axios.get('/api/v1/products'),
     getById: (id: number) => axios.get(`/api/v1/products/${id}`),
 };
+

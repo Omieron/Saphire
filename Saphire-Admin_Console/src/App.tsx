@@ -5,6 +5,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { OnboardingProvider } from './contexts/OnboardingContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import Layout from './components/Layout/Layout';
+import PageLoader from './components/PageLoader/PageLoader';
 import Login from './pages/Login/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Companies from './pages/Companies/Companies';
@@ -34,28 +35,31 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout />
-            <OnboardingTour />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="companies" element={<Companies />} />
-        <Route path="locations" element={<Locations />} />
-        <Route path="machines" element={<Machines />} />
-        <Route path="products" element={<Products />} />
-        <Route path="users" element={<Users />} />
+    <>
+      <PageLoader />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+              <OnboardingTour />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="companies" element={<Companies />} />
+          <Route path="locations" element={<Locations />} />
+          <Route path="machines" element={<Machines />} />
+          <Route path="products" element={<Products />} />
+          <Route path="users" element={<Users />} />
 
-        <Route path="qc-templates" element={<QcTemplates />} />
-        <Route path="qc-records" element={<QcRecords />} />
-      </Route>
-    </Routes>
+          <Route path="qc-templates" element={<QcTemplates />} />
+          <Route path="qc-records" element={<QcRecords />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 
