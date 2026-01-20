@@ -4,6 +4,8 @@ import { userApi } from '../../api/user.api';
 import type { UserRequest } from '../../api/user.api';
 import type { User } from '../../api/auth.api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import Toast from '../../components/Toast/Toast';
 import PageTour from '../../components/PageTour/PageTour';
 
 const PAGE_TOUR_STEPS = [
@@ -28,9 +30,24 @@ export default function Users() {
     const [formData, setFormData] = useState<UserRequest>({ username: '', password: '', email: '', fullName: '', role: 'OPERATOR', active: true });
     const [saving, setSaving] = useState(false);
 
+    // Delete confirmation state
+    const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Toast state
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+        show: false,
+        message: '',
+        type: 'success',
+    });
+
     const fetchData = async () => {
         try { const response = await userApi.getAll(); setUsers(response.data.data || []); }
-        catch (error) { console.error('Failed to fetch users:', error); }
+        catch (error: any) {
+            console.error('Failed to fetch users:', error);
+            const errMsg = error.response?.data?.message || error.message;
+            setToast({ show: true, message: `Hata: ${errMsg}`, type: 'error' });
+        }
         finally { setLoading(false); }
     };
 
@@ -44,9 +61,24 @@ export default function Users() {
         setShowModal(true);
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm(t.common.confirm)) return;
-        try { await userApi.delete(id); fetchData(); } catch (error) { console.error('Failed to delete:', error); }
+    const handleDeleteClick = (item: User) => {
+        setDeleteTarget(item);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            await userApi.delete(deleteTarget.id);
+            setDeleteTarget(null);
+            setToast({ show: true, message: t.common.recordDeleted, type: 'success' });
+            fetchData();
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            setToast({ show: true, message: 'Silme işlemi başarısız oldu!', type: 'error' });
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +91,21 @@ export default function Users() {
             else { await userApi.create(dataToSend); }
             setShowModal(false);
             fetchData();
-        } catch (error) { console.error('Failed to save:', error); }
+        } catch (error: any) {
+            console.error('Failed to save:', error);
+            let errMsg = 'Kaydetme işlemi başarısız oldu!';
+            if (error.response?.data) {
+                const apiRes = error.response.data;
+                errMsg = apiRes.message || errMsg;
+                if (apiRes.data && typeof apiRes.data === 'object') {
+                    const validationErrors = Object.entries(apiRes.data)
+                        .map(([field, msg]) => `${field}: ${msg}`)
+                        .join(', ');
+                    if (validationErrors) errMsg += ` (${validationErrors})`;
+                }
+            }
+            setToast({ show: true, message: `Hata: ${errMsg}`, type: 'error' });
+        }
         finally { setSaving(false); }
     };
 
@@ -130,7 +176,7 @@ export default function Users() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button onClick={() => handleEdit(user)} className="p-2 text-[var(--color-text-secondary)] hover:text-teal-500 hover:bg-teal-500/10 rounded-lg transition-colors"><Pencil size={16} /></button>
-                                            <button onClick={() => handleDelete(user.id)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
+                                            <button onClick={() => handleDeleteClick(user)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 );
@@ -202,6 +248,25 @@ export default function Users() {
                     filter: { title: 'Role Göre Filtrele', desc: 'Kullanıcıları rolüne göre filtreleyebilirsiniz.' },
                     add: { title: 'Yeni Kullanıcı', desc: 'Sisteme yeni kullanıcı eklemek için tıklayın.' },
                 }}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDeleteConfirm}
+                title={t.common.deleteConfirm}
+                message={t.common.deleteMessage}
+                loading={deleting}
+            />
+
+            {/* Success/Error Toast */}
+            <Toast
+                isOpen={toast.show}
+                onClose={() => setToast({ ...toast, show: false })}
+                message={toast.message}
+                type={toast.type}
+                duration={3000}
             />
         </div>
     );

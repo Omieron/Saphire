@@ -5,6 +5,8 @@ import { productApi, type Product } from '../../api/product.api';
 import { machineApi, type Machine } from '../../api/machine.api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import Tooltip from '../../components/Tooltip/Tooltip';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import Toast from '../../components/Toast/Toast';
 import PageTour from '../../components/PageTour/PageTour';
 
 // Page tour steps for templates list
@@ -81,6 +83,17 @@ export default function QcTemplates() {
     const [controlPoints, setControlPoints] = useState<ControlPoint[]>([]);
     const [saving, setSaving] = useState(false);
 
+    // Delete confirmation state
+    const [deleteTarget, setDeleteTarget] = useState<QcFormTemplate | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Toast state
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+        show: false,
+        message: '',
+        type: 'success',
+    });
+
     // Field modal state
     const [showFieldModal, setShowFieldModal] = useState(false);
     const [editingField, setEditingField] = useState<ControlPoint | null>(null);
@@ -153,13 +166,23 @@ export default function QcTemplates() {
         setShowBuilder(true);
     };
 
-    const handleDeleteTemplate = async (id: number) => {
-        if (!confirm(t.common.confirm)) return;
+    const handleDeleteClick = (item: QcFormTemplate) => {
+        setDeleteTarget(item);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
         try {
-            await qcTemplateApi.delete(id);
+            await qcTemplateApi.delete(deleteTarget.id);
+            setDeleteTarget(null);
+            setToast({ show: true, message: t.common.recordDeleted, type: 'success' });
             fetchData();
         } catch (error) {
             console.error('Failed to delete:', error);
+            setToast({ show: true, message: 'Silme işlemi başarısız oldu!', type: 'error' });
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -217,9 +240,9 @@ export default function QcTemplates() {
                 fieldKey: cp.label.toLowerCase().replace(/\s+/g, '_'),
                 label: cp.label,
                 inputType: cp.inputType,
-                minValue: cp.minValue ? parseFloat(cp.minValue) : undefined,
-                maxValue: cp.maxValue ? parseFloat(cp.maxValue) : undefined,
-                targetValue: cp.targetValue ? parseFloat(cp.targetValue) : undefined,
+                minValue: cp.minValue !== '' ? parseFloat(cp.minValue) : undefined,
+                maxValue: cp.maxValue !== '' ? parseFloat(cp.maxValue) : undefined,
+                targetValue: cp.targetValue !== '' ? parseFloat(cp.targetValue) : undefined,
                 unit: cp.unit || undefined,
                 required: cp.required,
                 // Convert newline-separated options to array for SELECT type
@@ -269,9 +292,20 @@ export default function QcTemplates() {
 
             setShowBuilder(false);
             fetchData();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save:', error);
-            alert('Save failed. Check console for details.');
+            let errMsg = 'Kaydetme işlemi başarısız oldu!';
+            if (error.response?.data) {
+                const apiRes = error.response.data;
+                errMsg = apiRes.message || errMsg;
+                if (apiRes.data && typeof apiRes.data === 'object' && !Array.isArray(apiRes.data)) {
+                    const validationErrors = Object.entries(apiRes.data)
+                        .map(([field, msg]) => `${field}: ${msg}`)
+                        .join(', ');
+                    if (validationErrors) errMsg += ` (${validationErrors})`;
+                }
+            }
+            setToast({ show: true, message: `Hata: ${errMsg}`, type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -353,7 +387,7 @@ export default function QcTemplates() {
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <button onClick={() => handleEditTemplate(template)} className="p-2 text-[var(--color-text-secondary)] hover:text-teal-500 hover:bg-teal-500/10 rounded-lg transition-colors"><Settings size={16} /></button>
-                                                    <button onClick={() => handleDeleteTemplate(template.id)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
+                                                    <button onClick={() => handleDeleteClick(template)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"><Trash2 size={16} /></button>
                                                 </td>
                                             </tr>
                                             {expandedRow === template.id && template.sections && template.sections.length > 0 && (
@@ -398,6 +432,25 @@ export default function QcTemplates() {
                         search: { title: 'Şablon Ara', desc: 'QC şablonlarını isim veya kod ile arayabilirsiniz.' },
                         add: { title: 'Yeni Şablon', desc: 'Yeni bir kalite kontrol şablonu oluşturmak için tıklayın.' },
                     }}
+                />
+
+                {/* Delete Confirmation Modal */}
+                <ConfirmModal
+                    isOpen={!!deleteTarget}
+                    onClose={() => setDeleteTarget(null)}
+                    onConfirm={handleDeleteConfirm}
+                    title={t.common.deleteConfirm}
+                    message={t.common.deleteMessage}
+                    loading={deleting}
+                />
+
+                {/* Success/Error Toast */}
+                <Toast
+                    isOpen={toast.show}
+                    onClose={() => setToast({ ...toast, show: false })}
+                    message={toast.message}
+                    type={toast.type}
+                    duration={3000}
                 />
             </div >
         );

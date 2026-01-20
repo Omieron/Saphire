@@ -4,7 +4,7 @@ spring:
 
   # Database
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5434}/${DB_NAME:saphire_system}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5345}/${DB_NAME:saphire_system}
     username: ${DB_USERNAME:saphire_master}
     password: ${DB_PASSWORD:saphire_password}
     driver-class-name: org.postgresql.Driver
@@ -45,5 +45,5 @@ jwt:
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
-    com.crownbyte.saphire: ${LOG_LEVEL_APP:DEBUG}
+    com.crownbyte.Saphire: ${LOG_LEVEL_APP:DEBUG}
     org.hibernate.SQL: ${LOG_LEVEL_SQL:DEBUG}

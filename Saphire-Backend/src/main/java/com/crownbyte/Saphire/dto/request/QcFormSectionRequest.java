@@ -1,5 +1,6 @@
 package com.crownbyte.Saphire.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -30,5 +31,6 @@ public class QcFormSectionRequest {
 
     private List<String> groupLabels;
 
+    @Valid
     private List<QcFormFieldRequest> fields;
 }

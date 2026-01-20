@@ -1,5 +1,6 @@
 package com.crownbyte.Saphire.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -40,7 +41,9 @@ public class QcFormTemplateRequest {
 
     private Boolean active;
 
+    @Valid
     private List<QcFormHeaderFieldRequest> headerFields;
 
+    @Valid
     private List<QcFormSectionRequest> sections;
 }
