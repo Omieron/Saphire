@@ -76,6 +76,13 @@ public class QcFormRecordController {
         return ResponseEntity.ok(ApiResponse.success(records));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<List<QcFormRecordResponse>>> getMyRecords(
+            @RequestHeader("X-User-Id") Long userId) {
+        List<QcFormRecordResponse> records = recordService.getByFilledById(userId);
+        return ResponseEntity.ok(ApiResponse.success(records));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<QcFormRecordResponse>> getById(@PathVariable Long id) {
         return recordService.getById(id)
