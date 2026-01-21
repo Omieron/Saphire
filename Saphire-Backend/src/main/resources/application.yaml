@@ -13,10 +13,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:none}
-    show-sql: ${JPA_SHOW_SQL:true}
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   # Flyway Database Migrations
@@ -45,5 +45,6 @@ jwt:
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
-    com.crownbyte.Saphire: ${LOG_LEVEL_APP:DEBUG}
-    org.hibernate.SQL: ${LOG_LEVEL_SQL:DEBUG}
+    com.crownbyte.Saphire: ${LOG_LEVEL_APP:INFO}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:INFO}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_BINDER:INFO}
