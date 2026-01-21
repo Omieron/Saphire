@@ -4,6 +4,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { OnboardingProvider } from './contexts/OnboardingContext';
 import { SidebarProvider } from './contexts/SidebarContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import Layout from './components/Layout/Layout';
 import PageLoader from './components/PageLoader/PageLoader';
 import Login from './pages/Login/Login';
@@ -70,13 +71,15 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <OnboardingProvider>
-            <SidebarProvider>
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
-            </SidebarProvider>
-          </OnboardingProvider>
+          <NotificationProvider>
+            <OnboardingProvider>
+              <SidebarProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </SidebarProvider>
+            </OnboardingProvider>
+          </NotificationProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

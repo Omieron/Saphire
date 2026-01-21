@@ -6,11 +6,13 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import StatusModal from '../../components/StatusModal/StatusModal';
 import type { StatusModalType } from '../../components/StatusModal/StatusModal';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 // resultColors removed as it is not used in the approval queue to prevent pre-judging records
 
 export default function QcApprovalQueue() {
     const { t, language } = useLanguage();
+    const { addAlert, removeAlert } = useNotifications();
     const [records, setRecords] = useState<QcFormRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -41,13 +43,29 @@ export default function QcApprovalQueue() {
             const response = await qcRecordApi.getAll();
             // Only show SUBMITTED records in the approval queue
             const allRecords = response.data.data || [];
-            setRecords(allRecords.filter(r => r.status === 'SUBMITTED'));
+            const pending = allRecords.filter(r => r.status === 'SUBMITTED');
+            setRecords(pending);
+
+            if (pending.length > 0) {
+                addAlert({
+                    id: 'pending-qc',
+                    message: `${pending.length} ${t.qcRecords.pendingApproval}`,
+                    type: 'info',
+                    targetUrl: '/qc-approval'
+                });
+            } else {
+                removeAlert('pending-qc');
+            }
         }
         catch (error) { console.error('Failed to fetch:', error); }
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+        // Clear the alert when visiting the page
+        removeAlert('pending-qc');
+    }, []);
 
     const handleApprove = async () => {
         if (!approveId) return;

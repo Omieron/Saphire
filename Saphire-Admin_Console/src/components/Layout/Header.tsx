@@ -2,7 +2,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useSidebar } from '../../contexts/SidebarContext';
-import { Sun, Moon, Bell, Search, Globe, HelpCircle, Menu } from 'lucide-react';
+import { Sun, Moon, Search, Globe, HelpCircle, Menu } from 'lucide-react';
+import AlertCenter from '../AlertCenter/AlertCenter';
 
 interface HeaderProps {
     title: string;
@@ -55,10 +56,7 @@ export default function Header({ title }: HeaderProps) {
                 </button>
 
                 {/* Notifications */}
-                <button className="p-2 rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors relative">
-                    <Bell size={18} className="text-[var(--color-text-secondary)]" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <AlertCenter />
 
                 {/* Language Toggle */}
                 <button
