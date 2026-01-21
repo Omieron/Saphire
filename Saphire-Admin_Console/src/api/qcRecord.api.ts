@@ -78,11 +78,11 @@ export const qcRecordApi = {
     submit: (id: number) =>
         api.post<ApiResponse<QcFormRecord>>(`/qc-records/${id}/submit`),
 
-    approve: (id: number) =>
-        api.post<ApiResponse<QcFormRecord>>(`/qc-records/${id}/approve`),
+    approve: (id: number, result?: string) =>
+        api.post<ApiResponse<QcFormRecord>>(`/qc-records/${id}/approve${result ? `?result=${result}` : ''}`),
 
-    reject: (id: number, reason: string) =>
-        api.post<ApiResponse<QcFormRecord>>(`/qc-records/${id}/reject?reason=${encodeURIComponent(reason)}`),
+    reject: (id: number, reason: string, result?: string) =>
+        api.post<ApiResponse<QcFormRecord>>(`/qc-records/${id}/reject?reason=${encodeURIComponent(reason)}${result ? `&result=${result}` : ''}`),
 
     updateNotes: (id: number, notes: string) =>
         api.put<ApiResponse<QcFormRecord>>(`/qc-records/${id}/notes`, notes, {

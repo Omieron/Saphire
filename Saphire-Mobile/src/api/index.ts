@@ -22,6 +22,7 @@ export const templateApi = {
 // QC Record API
 export const recordApi = {
     create: (data: any) => axios.post('/api/v1/qc-records', data),
+    submit: (id: number) => axios.post(`/api/v1/qc-records/${id}/submit`),
     getMyRecords: () => axios.get('/api/v1/qc-records/my'),
 };
 

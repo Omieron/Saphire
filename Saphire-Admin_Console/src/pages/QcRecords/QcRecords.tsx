@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Clock, FileCheck, Eye, ThumbsUp, ThumbsDown, AlertCircle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, FileCheck, Eye, AlertCircle } from 'lucide-react';
 import { qcRecordApi } from '../../api/qcRecord.api';
 import type { QcFormRecord } from '../../api/qcRecord.api';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const statusColors: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
     DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-500', icon: Clock },
+    IN_PROGRESS: { bg: 'bg-blue-500/10', text: 'text-blue-500', icon: Clock },
     SUBMITTED: { bg: 'bg-yellow-500/10', text: 'text-yellow-500', icon: FileCheck },
     APPROVED: { bg: 'bg-green-500/10', text: 'text-green-500', icon: CheckCircle },
     REJECTED: { bg: 'bg-red-500/10', text: 'text-red-500', icon: XCircle },
@@ -25,12 +26,18 @@ export default function QcRecords() {
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [selectedRecord, setSelectedRecord] = useState<QcFormRecord | null>(null);
-    const [showRejectModal, setShowRejectModal] = useState(false);
-    const [rejectReason, setRejectReason] = useState('');
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [processing, setProcessing] = useState(false);
-    const [notes, setNotes] = useState('');
-    const [savingNotes, setSavingNotes] = useState(false);
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'DRAFT': return t.qcRecords.statusDraft;
+            case 'IN_PROGRESS': return t.qcRecords.statusInProgress;
+            case 'SUBMITTED': return t.qcRecords.statusSubmitted;
+            case 'APPROVED': return t.qcRecords.statusApproved;
+            case 'REJECTED': return t.qcRecords.statusRejected;
+            default: return status;
+        }
+    };
 
     const fetchData = async () => {
         try { const response = await qcRecordApi.getAll(); setRecords(response.data.data || []); }
@@ -40,52 +47,8 @@ export default function QcRecords() {
 
     useEffect(() => { fetchData(); }, []);
 
-    const handleApprove = async (id: number) => {
-        if (!confirm(t.common.confirm)) return;
-        setProcessing(true);
-        try { await qcRecordApi.approve(id); fetchData(); }
-        catch (error) { console.error('Failed to approve:', error); }
-        finally { setProcessing(false); }
-    };
-
-    const handleReject = async () => {
-        if (!selectedRecord || !rejectReason) return;
-        setProcessing(true);
-        try {
-            await qcRecordApi.reject(selectedRecord.id, rejectReason);
-            setShowRejectModal(false);
-            setRejectReason('');
-            setSelectedRecord(null);
-            fetchData();
-        } catch (error) { console.error('Failed to reject:', error); }
-        finally { setProcessing(false); }
-    };
-
-    const handleSaveNotes = async () => {
-        if (!selectedRecord) return;
-        setSavingNotes(true);
-        try {
-            await qcRecordApi.updateNotes(selectedRecord.id, notes);
-            const updatedRecords = records.map(r => r.id === selectedRecord.id ? { ...r, notes } : r);
-            setRecords(updatedRecords);
-            setSelectedRecord({ ...selectedRecord, notes });
-        } catch (error) {
-            console.error('Failed to save notes:', error);
-            alert('Not kaydedilemedi!');
-        } finally {
-            setSavingNotes(false);
-        }
-    };
-
-    const openRejectModal = (record: QcFormRecord) => {
-        setSelectedRecord(record);
-        setRejectReason('');
-        setShowRejectModal(true);
-    };
-
     const openDetailModal = (record: QcFormRecord) => {
         setSelectedRecord(record);
-        setNotes(record.notes || '');
         setShowDetailModal(true);
     };
 
@@ -107,7 +70,7 @@ export default function QcRecords() {
                     <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
                         className="px-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
                         <option value="">{t.instances.allStatuses}</option>
-                        {Object.keys(statusColors).map((s) => <option key={s} value={s}>{s}</option>)}
+                        {Object.keys(statusColors).map((s) => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
                     </select>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
@@ -152,7 +115,7 @@ export default function QcRecords() {
                                         <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">{record.machineName || record.productInstanceSerial || '-'}</td>
                                         <td className="px-6 py-4 text-sm text-[var(--color-text)]">{record.filledByName || '-'}</td>
                                         <td className="px-6 py-4">
-                                            {resultStyle ? (
+                                            {resultStyle && record.status !== 'SUBMITTED' ? (
                                                 <span className={`inline-flex items-center px-2 py-1 ${resultStyle.bg} ${resultStyle.text} rounded text-xs font-medium`}>{record.overallResult}</span>
                                             ) : (
                                                 <span className="text-[var(--color-text-secondary)] text-xs">-</span>
@@ -165,13 +128,7 @@ export default function QcRecords() {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">{record.submittedAt ? new Date(record.submittedAt).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                                         <td className="px-6 py-4 text-right">
-                                            {record.status === 'SUBMITTED' && (
-                                                <>
-                                                    <button onClick={() => handleApprove(record.id)} disabled={processing} className="p-2 text-green-500 hover:bg-green-500/10 rounded-lg transition-colors" title={t.qcRecords.approve}><ThumbsUp size={16} /></button>
-                                                    <button onClick={() => openRejectModal(record)} disabled={processing} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1" title={t.qcRecords.reject}><ThumbsDown size={16} /></button>
-                                                </>
-                                            )}
-                                            <button onClick={() => openDetailModal(record)} className="p-2 text-[var(--color-text-secondary)] hover:text-teal-500 hover:bg-teal-500/10 rounded-lg transition-colors ml-1" title={t.common.edit}><Eye size={16} /></button>
+                                            <button onClick={() => openDetailModal(record)} className="p-2 text-[var(--color-text-secondary)] hover:text-teal-500 hover:bg-teal-500/10 rounded-lg transition-colors ml-1" title={t.common.view}><Eye size={16} /></button>
                                         </td>
                                     </tr>
                                 );
@@ -191,15 +148,15 @@ export default function QcRecords() {
                                     <FileCheck size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-[var(--color-text)] leading-none">{selectedRecord.templateName}</h3>
-                                    <p className="text-sm text-[var(--color-text-secondary)] mt-1 font-mono">{selectedRecord.templateCode}</p>
+                                    <h3 className="text-xl font-bold text-[var(--color-text)] leading-none text-left">{selectedRecord.templateName}</h3>
+                                    <p className="text-sm text-[var(--color-text-secondary)] mt-1 font-mono text-left">{selectedRecord.templateCode}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusColors[selectedRecord.status]?.bg} ${statusColors[selectedRecord.status]?.text}`}>
-                                    {selectedRecord.status}
+                                    {getStatusLabel(selectedRecord.status)}
                                 </span>
-                                {selectedRecord.overallResult && (
+                                {selectedRecord.overallResult && selectedRecord.status !== 'SUBMITTED' && (
                                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${resultColors[selectedRecord.overallResult]?.bg} ${resultColors[selectedRecord.overallResult]?.text}`}>
                                         {selectedRecord.overallResult}
                                     </span>
@@ -207,6 +164,49 @@ export default function QcRecords() {
                                 <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-[var(--color-surface-hover)] rounded-lg transition-colors text-[var(--color-text-secondary)]">
                                     <XCircle size={24} />
                                 </button>
+                            </div>
+                        </div>
+
+                        {/* Workflow Stepper */}
+                        <div className="px-6 py-4 bg-[var(--color-bg)]/30 border-b border-[var(--color-border)]">
+                            <div className="flex items-center justify-between max-w-2xl mx-auto relative text-left">
+                                {/* Connecting Lines */}
+                                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[var(--color-border)] -translate-y-1/2 -z-0" />
+                                <div
+                                    className="absolute top-1/2 left-0 h-0.5 bg-teal-500 -translate-y-1/2 transition-all duration-500 -z-0"
+                                    style={{
+                                        width: selectedRecord.status === 'APPROVED' || selectedRecord.status === 'REJECTED' ? '100%' :
+                                            selectedRecord.status === 'SUBMITTED' ? '66%' :
+                                                selectedRecord.status === 'IN_PROGRESS' ? '33%' : '0%'
+                                    }}
+                                />
+
+                                {[
+                                    { key: 'DRAFT', label: t.qcRecords.statusDraft, icon: Clock },
+                                    { key: 'IN_PROGRESS', label: t.qcRecords.statusInProgress, icon: Clock },
+                                    { key: 'SUBMITTED', label: t.qcRecords.statusSubmitted, icon: FileCheck },
+                                    { key: 'FINALIZED', label: selectedRecord.status === 'REJECTED' ? t.qcRecords.statusRejected : t.qcRecords.statusApproved, icon: selectedRecord.status === 'REJECTED' ? XCircle : CheckCircle }
+                                ].map((step, idx) => {
+                                    const isCompleted = (step.key === 'DRAFT') ||
+                                        (step.key === 'IN_PROGRESS' && ['IN_PROGRESS', 'SUBMITTED', 'APPROVED', 'REJECTED'].includes(selectedRecord.status)) ||
+                                        (step.key === 'SUBMITTED' && ['SUBMITTED', 'APPROVED', 'REJECTED'].includes(selectedRecord.status)) ||
+                                        (step.key === 'FINALIZED' && ['APPROVED', 'REJECTED'].includes(selectedRecord.status));
+                                    const isActive = (step.key === selectedRecord.status) || (step.key === 'FINALIZED' && ['APPROVED', 'REJECTED'].includes(selectedRecord.status));
+
+                                    return (
+                                        <div key={idx} className="flex flex-col items-center gap-2 relative z-10 bg-[var(--color-surface)] px-2">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted ? 'bg-teal-500 border-teal-500 text-white' :
+                                                isActive ? 'border-teal-500 text-teal-600 bg-teal-50' :
+                                                    'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]'
+                                                }`}>
+                                                <step.icon size={16} />
+                                            </div>
+                                            <span className={`text-[10px] font-bold uppercase tracking-tighter ${isActive ? 'text-teal-600' : 'text-[var(--color-text-secondary)]'}`}>
+                                                {step.label}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -252,11 +252,11 @@ export default function QcRecords() {
                                             {selectedRecord.values && selectedRecord.values.length > 0 ? (
                                                 selectedRecord.values.map((v, idx) => (
                                                     <tr key={idx} className="hover:bg-[var(--color-surface-hover)] transition-colors">
-                                                        <td className="px-4 py-3 font-medium text-[var(--color-text)]">
+                                                        <td className="px-4 py-3 font-medium text-[var(--color-text)] text-left">
                                                             {v.fieldLabel}
                                                             {v.repeatIndex ? <span className="ml-2 text-[10px] text-[var(--color-text-secondary)] font-normal">(Numune {v.repeatIndex})</span> : ''}
                                                         </td>
-                                                        <td className="px-4 py-3">
+                                                        <td className="px-4 py-3 text-left">
                                                             {v.valueBoolean !== null ? (v.valueBoolean ? 'Evet' : 'Hayır') :
                                                                 v.valueNumber !== null ? v.valueNumber :
                                                                     v.valueText || '-'}
@@ -272,35 +272,23 @@ export default function QcRecords() {
                                                     </tr>
                                                 ))
                                             ) : (
-                                                <tr><td colSpan={3} className="px-4 py-8 text-center text-[var(--color-text-secondary)] italic">Bu kayda ait değer bulunamadı.</td></tr>
+                                                <tr><td colSpan={3} className="px-4 py-8 text-center text-[var(--color-text-secondary)] italic text-left">Bu kayda ait değer bulunamadı.</td></tr>
                                             )}
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
 
-                            {/* Notes & Rejection */}
+                            {/* Notes & Rejection Display (Read Only) */}
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-bold text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">Notlar</h4>
-                                        <button
-                                            onClick={handleSaveNotes}
-                                            disabled={savingNotes || notes === selectedRecord.notes}
-                                            className="text-xs font-bold text-teal-600 hover:text-teal-700 disabled:opacity-0 transition-all uppercase"
-                                        >
-                                            {savingNotes ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
-                                        </button>
+                                <div className="space-y-2 text-left">
+                                    <h4 className="text-sm font-bold text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">Notlar</h4>
+                                    <div className="w-full p-4 bg-[var(--color-bg)] rounded-xl border border-[var(--color-border)] min-h-[100px] text-sm text-[var(--color-text)]">
+                                        {selectedRecord.notes || 'Not bulunmuyor.'}
                                     </div>
-                                    <textarea
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
-                                        placeholder="Not girin..."
-                                        className="w-full p-4 bg-[var(--color-bg)] rounded-xl border border-[var(--color-border)] min-h-[100px] text-sm text-[var(--color-text)] focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all resize-none"
-                                    />
                                 </div>
                                 {selectedRecord.status === 'REJECTED' && (
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 text-left">
                                         <h4 className="text-sm font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">Red Nedeni</h4>
                                         <div className="p-4 bg-red-500/5 rounded-xl border border-red-500/20 min-h-[100px] text-sm text-red-600 font-medium">
                                             {selectedRecord.rejectionReason || 'Neden belirtilmedi.'}
@@ -311,29 +299,10 @@ export default function QcRecords() {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="px-6 py-4 border-t border-[var(--color-border)] flex justify-end bg-[var(--color-bg)]/50 rounded-b-2xl">
+                        <div className="px-6 py-4 border-t border-[var(--color-border)] flex items-center justify-end bg-[var(--color-bg)]/50 rounded-b-2xl">
                             <button onClick={() => setShowDetailModal(false)} className="px-6 py-2 bg-[var(--color-text)] text-[var(--color-surface)] rounded-xl text-sm font-bold hover:opacity-90 transition-opacity">
-                                Kapat
+                                {t.common.close}
                             </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showRejectModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                        <h3 className="text-xl font-bold text-[var(--color-text)] mb-4">{t.qcRecords.rejectRecord}</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-[var(--color-text-secondary)] mb-2 uppercase tracking-wide">{t.qcRecords.rejectionReason} <span className="text-red-500">*</span></label>
-                                <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
-                                    className="w-full px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none text-[var(--color-text)]" rows={4} placeholder={t.qcRecords.provideReason} required />
-                            </div>
-                            <div className="flex gap-3">
-                                <button type="button" onClick={() => setShowRejectModal(false)} className="flex-1 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors font-bold">{t.common.cancel}</button>
-                                <button onClick={handleReject} disabled={!rejectReason || processing} className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 font-bold">{processing ? t.common.loading : t.qcRecords.reject}</button>
-                            </div>
                         </div>
                     </div>
                 </div>

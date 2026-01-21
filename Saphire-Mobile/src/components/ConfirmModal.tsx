@@ -6,7 +6,7 @@ interface ConfirmModalProps {
     onCancel: () => void;
     confirmText?: string;
     cancelText?: string;
-    confirmColor?: 'red' | 'teal' | 'green';
+    confirmColor?: 'red' | 'teal' | 'green' | 'blue';
 }
 
 export default function ConfirmModal({
@@ -24,7 +24,8 @@ export default function ConfirmModal({
     const colorClasses = {
         red: 'bg-red-500 hover:bg-red-600',
         teal: 'bg-teal-500 hover:bg-teal-600',
-        green: 'bg-green-500 hover:bg-green-600'
+        green: 'bg-green-500 hover:bg-green-600',
+        blue: 'bg-blue-500 hover:bg-blue-600'
     };
 
     return (

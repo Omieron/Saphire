@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -10,6 +10,11 @@ interface ConfirmModalProps {
     message: string;
     confirmWord?: string; // Word user must type to confirm
     loading?: boolean;
+    simple?: boolean; // If true, hide the input and typing requirement
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: 'danger' | 'primary';
+    children?: ReactNode;
 }
 
 export default function ConfirmModal({
@@ -20,6 +25,11 @@ export default function ConfirmModal({
     message,
     confirmWord,
     loading = false,
+    simple = false,
+    confirmLabel,
+    cancelLabel,
+    variant = 'danger',
+    children,
 }: ConfirmModalProps) {
     const { t, language } = useLanguage();
     const [inputValue, setInputValue] = useState('');
@@ -30,7 +40,7 @@ export default function ConfirmModal({
     const normalizeForCompare = (str: string) => {
         return str.toLocaleUpperCase('tr-TR');
     };
-    const isConfirmEnabled = normalizeForCompare(inputValue) === normalizeForCompare(requiredWord);
+    const isConfirmEnabled = simple || normalizeForCompare(inputValue) === normalizeForCompare(requiredWord);
 
     useEffect(() => {
         if (!isOpen) {
@@ -53,7 +63,7 @@ export default function ConfirmModal({
                 {/* Header with danger/delete color - pure red */}
                 <div className="bg-gradient-to-r from-red-500/10 to-red-400/10 px-6 py-4 border-b border-[var(--color-border)]">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${variant === 'danger' ? 'from-red-500 to-red-600' : 'from-teal-500 to-teal-600'} flex items-center justify-center`}>
                             <AlertTriangle size={20} className="text-white" />
                         </div>
                         <h3 className="text-lg font-semibold text-[var(--color-text)]">
@@ -74,22 +84,30 @@ export default function ConfirmModal({
                         {message}
                     </p>
 
-                    <div className="bg-[var(--color-bg)] rounded-xl p-4 border border-[var(--color-border)]">
-                        <p className="text-sm text-[var(--color-text)] mb-2">
-                            {language === 'tr'
-                                ? `Onaylamak için "${requiredWord}" yazın:`
-                                : `Type "${requiredWord}" to confirm:`
-                            }
-                        </p>
-                        <input
-                            type="text"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            placeholder={requiredWord}
-                            className="w-full px-4 py-2.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-center font-mono text-lg uppercase"
-                            autoFocus
-                        />
-                    </div>
+                    {children && (
+                        <div className="mb-4">
+                            {children}
+                        </div>
+                    )}
+
+                    {!simple && (
+                        <div className="bg-[var(--color-bg)] rounded-xl p-4 border border-[var(--color-border)]">
+                            <p className="text-sm text-[var(--color-text)] mb-2">
+                                {language === 'tr'
+                                    ? `Onaylamak için "${requiredWord}" yazın:`
+                                    : `Type "${requiredWord}" to confirm:`
+                                }
+                            </p>
+                            <input
+                                type="text"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                placeholder={requiredWord}
+                                className={`w-full px-4 py-2.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 ${variant === 'danger' ? 'focus:ring-red-500' : 'focus:ring-teal-500'} text-center font-mono text-lg uppercase`}
+                                autoFocus
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
@@ -99,14 +117,14 @@ export default function ConfirmModal({
                         disabled={loading}
                         className="flex-1 px-4 py-3 border border-[var(--color-border)] text-[var(--color-text)] rounded-xl hover:bg-[var(--color-surface-hover)] font-medium transition-all disabled:opacity-50"
                     >
-                        {t.common.cancel}
+                        {cancelLabel || t.common.cancel}
                     </button>
                     <button
                         onClick={onConfirm}
                         disabled={!isConfirmEnabled || loading}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 font-medium shadow-lg shadow-red-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`flex-1 px-4 py-3 bg-gradient-to-r ${variant === 'danger' ? 'from-red-500 to-red-600 shadow-red-500/25' : 'from-teal-500 to-teal-600 shadow-teal-500/25'} text-white rounded-xl font-medium shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                        {loading ? t.common.loading : t.common.delete}
+                        {loading ? t.common.loading : (confirmLabel || (variant === 'danger' ? t.common.delete : t.common.save))}
                     </button>
                 </div>
             </div>

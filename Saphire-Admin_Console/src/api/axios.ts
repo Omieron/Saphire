@@ -10,12 +10,24 @@ const api = axios.create({
     },
 });
 
-// Request interceptor - add token
+// Request interceptor - add token and user ID
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                const user = JSON.parse(storedUser);
+                if (user && user.id) {
+                    config.headers['X-User-Id'] = user.id.toString();
+                }
+            } catch (e) {
+                console.error('Error parsing user from localStorage', e);
+            }
         }
         return config;
     },

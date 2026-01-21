@@ -117,16 +117,19 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
         UserEntity filledBy = userRepository.findById(filledById)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + filledById));
 
+        // All new records are now submitted immediately
+        RecordStatusEnum status = RecordStatusEnum.SUBMITTED;
+
         QcFormRecordEntity entity = QcFormRecordEntity.builder()
                 .template(template)
                 .headerData(request.getHeaderData())
                 .scheduledFor(request.getScheduledFor())
                 .periodStart(request.getPeriodStart())
                 .periodEnd(request.getPeriodEnd())
-                .status(RecordStatusEnum.DRAFT)
+                .status(status)
                 .filledBy(filledBy)
                 .startedAt(LocalDateTime.now())
-                .submittedAt(LocalDateTime.now())
+                .submittedAt(LocalDateTime.now()) // Set immediately
                 .notes(request.getNotes())
                 .values(new ArrayList<>())
                 .build();
@@ -176,6 +179,9 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
             }
         }
 
+        // Calculate overall result since it's submitted immediately
+        entity.setOverallResult(calculateOverallResult(entity));
+
         QcFormRecordEntity saved = recordRepository.save(entity);
         return toResponse(saved);
     }
@@ -196,7 +202,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     }
 
     @Override
-    public QcFormRecordResponse approve(Long id, Long approvedById) {
+    public QcFormRecordResponse approve(Long id, Long approvedById, String result) {
         QcFormRecordEntity entity = recordRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Record not found with id: " + id));
 
@@ -206,18 +212,30 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
         entity.setStatus(RecordStatusEnum.APPROVED);
         entity.setApprovedBy(approvedBy);
         entity.setApprovedAt(LocalDateTime.now());
+        
+        if (result != null && !result.isEmpty()) {
+            entity.setOverallResult(OverallResultEnum.valueOf(result.toUpperCase()));
+        } else {
+            entity.setOverallResult(OverallResultEnum.PASS); // Default to PASS on approval
+        }
 
         QcFormRecordEntity saved = recordRepository.save(entity);
         return toResponse(saved);
     }
 
     @Override
-    public QcFormRecordResponse reject(Long id, Long rejectedById, String reason) {
+    public QcFormRecordResponse reject(Long id, Long rejectedById, String reason, String result) {
         QcFormRecordEntity entity = recordRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Record not found with id: " + id));
 
         entity.setStatus(RecordStatusEnum.REJECTED);
         entity.setRejectionReason(reason);
+        
+        if (result != null && !result.isEmpty()) {
+            entity.setOverallResult(OverallResultEnum.valueOf(result.toUpperCase()));
+        } else {
+            entity.setOverallResult(OverallResultEnum.FAIL); // Default to FAIL on rejection
+        }
 
         QcFormRecordEntity saved = recordRepository.save(entity);
         return toResponse(saved);

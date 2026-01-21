@@ -119,9 +119,10 @@ public class QcFormRecordController {
     @PostMapping("/{id}/approve")
     public ResponseEntity<ApiResponse<QcFormRecordResponse>> approve(
             @PathVariable Long id,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(required = false) String result) {
         try {
-            QcFormRecordResponse record = recordService.approve(id, userId);
+            QcFormRecordResponse record = recordService.approve(id, userId, result);
             return ResponseEntity.ok(ApiResponse.success("QC Record approved successfully", record));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -133,9 +134,10 @@ public class QcFormRecordController {
     public ResponseEntity<ApiResponse<QcFormRecordResponse>> reject(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long userId,
-            @RequestParam String reason) {
+            @RequestParam String reason,
+            @RequestParam(required = false) String result) {
         try {
-            QcFormRecordResponse record = recordService.reject(id, userId, reason);
+            QcFormRecordResponse record = recordService.reject(id, userId, reason, result);
             return ResponseEntity.ok(ApiResponse.success("QC Record rejected", record));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

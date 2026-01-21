@@ -32,7 +32,8 @@ export default function Sidebar() {
         { path: '/users', icon: Users, label: t.sidebar.users },
         { type: 'divider', label: t.sidebar.qc, tourId: 'qc' },
         { path: '/qc-templates', icon: ClipboardList, label: t.sidebar.qcTemplates },
-        { path: '/qc-records', icon: FileCheck, label: t.sidebar.qcRecords },
+        { path: '/qc-approval', icon: FileCheck, label: t.qcRecords.reviewQueue },
+        { path: '/qc-records', icon: ClipboardList, label: t.sidebar.qcRecords },
     ];
 
     const handleLogout = () => {

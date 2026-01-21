@@ -397,7 +397,7 @@ export default function QcEntry() {
             />
             <ConfirmModal
                 show={showSubmitConfirm}
-                title="Kayıtları göndermek istiyor musunuz?"
+                title="Onaya göndermek istiyor musunuz?"
                 message={`${progress.filled} / ${progress.total} alan dolduruldu.`}
                 onConfirm={handleSubmit}
                 onCancel={() => setShowSubmitConfirm(false)}
@@ -417,14 +417,16 @@ export default function QcEntry() {
                             <p className="text-sm opacity-80">%{progressPercent} tamamlandı</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowSubmitConfirm(true)}
-                        disabled={submitting}
-                        className="flex items-center gap-2 px-4 py-2 bg-white text-teal-600 rounded-lg font-medium shadow"
-                    >
-                        <Send size={18} />
-                        {submitting ? 'Gönderiliyor...' : 'Gönder'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowSubmitConfirm(true)}
+                            disabled={submitting}
+                            className="flex items-center gap-2 px-4 py-2 bg-white text-teal-600 rounded-lg font-medium shadow"
+                        >
+                            <Send size={18} />
+                            {submitting ? 'Gönderiliyor...' : 'Onaya Gönder'}
+                        </button>
+                    </div>
                 </div>
                 {/* Progress bar */}
                 <div className="mt-3 h-2 bg-white/30 rounded-full overflow-hidden">

@@ -16,6 +16,7 @@ import Users from './pages/Users/Users';
 
 import QcTemplates from './pages/QcTemplates/QcTemplates';
 import QcRecords from './pages/QcRecords/QcRecords';
+import QcApprovalQueue from './pages/QcApprovalQueue/QcApprovalQueue';
 import OnboardingTour from './components/Onboarding/OnboardingTour';
 
 // Protected Route wrapper
@@ -56,6 +57,7 @@ function AppRoutes() {
           <Route path="users" element={<Users />} />
 
           <Route path="qc-templates" element={<QcTemplates />} />
+          <Route path="qc-approval" element={<QcApprovalQueue />} />
           <Route path="qc-records" element={<QcRecords />} />
         </Route>
       </Routes>
