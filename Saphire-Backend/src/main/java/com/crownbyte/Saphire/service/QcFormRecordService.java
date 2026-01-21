@@ -126,6 +126,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
                 .status(RecordStatusEnum.DRAFT)
                 .filledBy(filledBy)
                 .startedAt(LocalDateTime.now())
+                .submittedAt(LocalDateTime.now())
                 .notes(request.getNotes())
                 .values(new ArrayList<>())
                 .build();

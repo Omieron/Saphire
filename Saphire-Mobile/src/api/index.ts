@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Backend API Base URL - Raspberry Pi
-const API_BASE_URL = 'http://192.168.0.18:8080';
+const API_BASE_URL = 'http://localhost:8080';
 
 // Configure axios defaults
 axios.defaults.baseURL = API_BASE_URL;
