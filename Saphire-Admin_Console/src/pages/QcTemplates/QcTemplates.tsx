@@ -57,7 +57,8 @@ interface ControlPoint {
     maxValue: string;
     repeatCount: number;
     required: boolean;
-    options: string; // For SELECT type - comma-separated options
+    options: string; // For SELECT type - newline or comma-separated options
+    fieldKey?: string;
 }
 
 export default function QcTemplates() {
@@ -158,7 +159,8 @@ export default function QcTemplates() {
                     maxValue: field.maxValue?.toString() || '',
                     repeatCount: section.repeatCount || 1,
                     required: field.required,
-                    options: Array.isArray(field.options) ? field.options.join('\\n') : (field.options || '')
+                    options: Array.isArray(field.options) ? field.options.join('\n') : (field.options || ''),
+                    fieldKey: field.fieldKey
                 });
             });
         });
@@ -237,7 +239,7 @@ export default function QcTemplates() {
             // Build the sections and fields structure
             const fields: QcFormFieldRequest[] = controlPoints.map((cp, index) => ({
                 fieldOrder: index + 1,
-                fieldKey: cp.label.toLowerCase().replace(/\s+/g, '_'),
+                fieldKey: cp.fieldKey || cp.label.toLowerCase().replace(/\s+/g, '_'),
                 label: cp.label,
                 inputType: cp.inputType,
                 minValue: cp.minValue !== '' ? parseFloat(cp.minValue) : undefined,
@@ -350,6 +352,7 @@ export default function QcTemplates() {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t.common.name}</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t.qcTemplates.productMachine}</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t.qcTemplates.controlPoints}</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t.common.date}</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t.common.status}</th>
                                 <th className="px-6 py-4 text-right text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t.common.actions}</th>
                             </tr>
@@ -378,6 +381,9 @@ export default function QcTemplates() {
                                                     {template.productName || template.machineName || '-'}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-[var(--color-text)]">{fieldCount} {t.qcTemplates.controlPoints.toLowerCase()}</td>
+                                                <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">
+                                                    {template.createdAt ? new Date(template.createdAt).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                </td>
                                                 <td className="px-6 py-4">
                                                     {template.active ? (
                                                         <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/10 text-green-500 rounded-full text-xs font-medium"><CheckCircle size={12} /> {t.common.active}</span>

@@ -29,8 +29,10 @@ public interface QcFormRecordServiceImpl {
     QcFormRecordResponse submit(Long id);
 
     QcFormRecordResponse approve(Long id, Long approvedById);
-
+ 
     QcFormRecordResponse reject(Long id, Long rejectedById, String reason);
+ 
+    QcFormRecordResponse updateNotes(Long id, String notes);
 
     void delete(Long id);
 }

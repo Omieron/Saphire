@@ -136,6 +136,19 @@ public class QcFormRecordController {
         }
     }
 
+    @PutMapping("/{id}/notes")
+    public ResponseEntity<ApiResponse<QcFormRecordResponse>> updateNotes(
+            @PathVariable Long id,
+            @RequestBody String notes) {
+        try {
+            QcFormRecordResponse record = recordService.updateNotes(id, notes);
+            return ResponseEntity.ok(ApiResponse.success("Notes updated successfully", record));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+ 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         try {

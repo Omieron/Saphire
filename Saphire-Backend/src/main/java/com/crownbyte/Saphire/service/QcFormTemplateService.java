@@ -247,71 +247,110 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
             entity.setProduct(product);
         }
 
-        // Clear and rebuild headerFields
-        entity.getHeaderFields().clear();
+        // Smart Sync for Header Fields
         if (request.getHeaderFields() != null) {
+            List<QcFormHeaderFieldEntity> existingHeaders = new ArrayList<>(entity.getHeaderFields());
+            // Mark all existing as inactive initially, then reactivate matched ones
+            existingHeaders.forEach(h -> h.setActive(false));
+ 
             for (QcFormHeaderFieldRequest hfReq : request.getHeaderFields()) {
-                QcFormHeaderFieldEntity headerField = QcFormHeaderFieldEntity.builder()
-                        .template(entity)
-                        .fieldOrder(hfReq.getFieldOrder())
-                        .fieldKey(hfReq.getFieldKey())
-                        .label(hfReq.getLabel())
-                        .fieldType(HeaderFieldTypeEnum.valueOf(hfReq.getFieldType().toUpperCase()))
-                        .options(hfReq.getOptions())
-                        .required(hfReq.getRequired() != null ? hfReq.getRequired() : true)
-                        .defaultValue(hfReq.getDefaultValue())
-                        .build();
-                entity.getHeaderFields().add(headerField);
-            }
-        }
-
-        // Clear and rebuild sections with their fields
-        entity.getSections().clear();
-        if (request.getSections() != null) {
-            for (QcFormSectionRequest sReq : request.getSections()) {
-                QcFormSectionEntity section = QcFormSectionEntity.builder()
-                        .template(entity)
-                        .sectionOrder(sReq.getSectionOrder())
-                        .name(sReq.getName())
-                        .description(sReq.getDescription())
-                        .isRepeatable(sReq.getIsRepeatable() != null ? sReq.getIsRepeatable() : false)
-                        .repeatCount(sReq.getRepeatCount())
-                        .repeatLabelPattern(sReq.getRepeatLabelPattern())
-                        .hasGroups(sReq.getHasGroups() != null ? sReq.getHasGroups() : false)
-                        .groupLabels(sReq.getGroupLabels())
-                        .fields(new ArrayList<>())
-                        .build();
-
-                if (sReq.getFields() != null) {
-                    for (QcFormFieldRequest fReq : sReq.getFields()) {
-                        QcFormFieldEntity field = QcFormFieldEntity.builder()
-                                .section(section)
-                                .fieldOrder(fReq.getFieldOrder())
-                                .fieldKey(fReq.getFieldKey())
-                                .label(fReq.getLabel())
-                                .inputType(InputTypeEnum.valueOf(fReq.getInputType().toUpperCase()))
-                                .minValue(fReq.getMinValue())
-                                .maxValue(fReq.getMaxValue())
-                                .targetValue(fReq.getTargetValue())
-                                .tolerance(fReq.getTolerance())
-                                .unit(fReq.getUnit())
-                                .decimalPlaces(fReq.getDecimalPlaces() != null ? fReq.getDecimalPlaces() : 2)
-                                .options(fReq.getOptions())
-                                .required(fReq.getRequired() != null ? fReq.getRequired() : true)
-                                .failCondition(fReq.getFailCondition())
-                                .helpText(fReq.getHelpText())
-                                .placeholder(fReq.getPlaceholder())
-                                .width(fReq.getWidth() != null ? fReq.getWidth() : "full")
-                                .build();
-                        section.getFields().add(field);
-                    }
+                QcFormHeaderFieldEntity headerField = existingHeaders.stream()
+                        .filter(h -> h.getFieldKey().equals(hfReq.getFieldKey()))
+                        .findFirst()
+                        .orElse(null);
+ 
+                if (headerField == null) {
+                    headerField = QcFormHeaderFieldEntity.builder().template(entity).build();
+                    entity.getHeaderFields().add(headerField);
                 }
-                entity.getSections().add(section);
+                
+                headerField.setFieldOrder(hfReq.getFieldOrder());
+                headerField.setFieldKey(hfReq.getFieldKey());
+                headerField.setLabel(hfReq.getLabel());
+                headerField.setFieldType(HeaderFieldTypeEnum.valueOf(hfReq.getFieldType().toUpperCase()));
+                headerField.setOptions(hfReq.getOptions());
+                headerField.setRequired(hfReq.getRequired() != null ? hfReq.getRequired() : true);
+                headerField.setDefaultValue(hfReq.getDefaultValue());
+                headerField.setActive(true);
             }
+        } else {
+            entity.getHeaderFields().forEach(h -> h.setActive(false));
         }
-
+ 
+        // Smart Sync for Sections and Fields
+        if (request.getSections() != null) {
+            List<QcFormSectionEntity> existingSections = new ArrayList<>(entity.getSections());
+            existingSections.forEach(s -> s.setActive(false));
+ 
+            for (QcFormSectionRequest sReq : request.getSections()) {
+                // Match section by name OR order (name is safer if provided)
+                QcFormSectionEntity section = existingSections.stream()
+                        .filter(s -> s.getName().equals(sReq.getName()))
+                        .findFirst()
+                        .orElse(null);
+ 
+                if (section == null) {
+                    section = QcFormSectionEntity.builder()
+                            .template(entity)
+                            .fields(new ArrayList<>())
+                            .build();
+                    entity.getSections().add(section);
+                }
+ 
+                section.setSectionOrder(sReq.getSectionOrder());
+                section.setName(sReq.getName());
+                section.setDescription(sReq.getDescription());
+                section.setIsRepeatable(sReq.getIsRepeatable() != null ? sReq.getIsRepeatable() : false);
+                section.setRepeatCount(sReq.getRepeatCount());
+                section.setRepeatLabelPattern(sReq.getRepeatLabelPattern());
+                section.setHasGroups(sReq.getHasGroups() != null ? sReq.getHasGroups() : false);
+                section.setGroupLabels(sReq.getGroupLabels());
+                section.setActive(true);
+ 
+                // Sync fields within this section
+                if (sReq.getFields() != null) {
+                    List<QcFormFieldEntity> existingFields = new ArrayList<>(section.getFields());
+                    existingFields.forEach(f -> f.setActive(false));
+ 
+                    for (QcFormFieldRequest fReq : sReq.getFields()) {
+                        QcFormFieldEntity field = existingFields.stream()
+                                .filter(f -> f.getFieldKey().equals(fReq.getFieldKey()))
+                                .findFirst()
+                                .orElse(null);
+ 
+                        if (field == null) {
+                            field = QcFormFieldEntity.builder().section(section).build();
+                            section.getFields().add(field);
+                        }
+ 
+                        field.setFieldOrder(fReq.getFieldOrder());
+                        field.setFieldKey(fReq.getFieldKey());
+                        field.setLabel(fReq.getLabel());
+                        field.setInputType(InputTypeEnum.valueOf(fReq.getInputType().toUpperCase()));
+                        field.setMinValue(fReq.getMinValue());
+                        field.setMaxValue(fReq.getMaxValue());
+                        field.setTargetValue(fReq.getTargetValue());
+                        field.setTolerance(fReq.getTolerance());
+                        field.setUnit(fReq.getUnit());
+                        field.setDecimalPlaces(fReq.getDecimalPlaces() != null ? fReq.getDecimalPlaces() : 2);
+                        field.setOptions(fReq.getOptions());
+                        field.setRequired(fReq.getRequired() != null ? fReq.getRequired() : true);
+                        field.setFailCondition(fReq.getFailCondition());
+                        field.setHelpText(fReq.getHelpText());
+                        field.setPlaceholder(fReq.getPlaceholder());
+                        field.setWidth(fReq.getWidth() != null ? fReq.getWidth() : "full");
+                        field.setActive(true);
+                    }
+                } else {
+                    section.getFields().forEach(f -> f.setActive(false));
+                }
+            }
+        } else {
+            entity.getSections().forEach(s -> s.setActive(false));
+        }
+ 
         entity.setVersion(entity.getVersion() + 1);
-
+ 
         QcFormTemplateEntity saved = templateRepository.save(entity);
         return toResponse(saved);
     }
@@ -333,6 +372,7 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
     private QcFormTemplateResponse toResponse(QcFormTemplateEntity entity) {
         List<QcFormHeaderFieldResponse> headerFieldsResponse = entity.getHeaderFields()
                 .stream()
+                .filter(QcFormHeaderFieldEntity::getActive)
                 .map(hf -> QcFormHeaderFieldResponse.builder()
                         .id(hf.getId())
                         .templateId(entity.getId())
@@ -348,9 +388,11 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
 
         List<QcFormSectionResponse> sectionsResponse = entity.getSections()
                 .stream()
+                .filter(QcFormSectionEntity::getActive)
                 .map(s -> {
                     List<QcFormFieldResponse> fieldsResponse = s.getFields()
                             .stream()
+                            .filter(QcFormFieldEntity::getActive)
                             .map(f -> QcFormFieldResponse.builder()
                                     .id(f.getId())
                                     .sectionId(s.getId())

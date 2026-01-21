@@ -54,4 +54,7 @@ public class QcFormSectionEntity {
     @OrderBy("fieldOrder ASC")
     @Builder.Default
     private List<QcFormFieldEntity> fields = new ArrayList<>();
+ 
+    @Builder.Default
+    private Boolean active = true;
 }

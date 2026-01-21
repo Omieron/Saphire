@@ -75,4 +75,7 @@ public class QcFormFieldEntity {
     @Column(length = 20)
     @Builder.Default
     private String width = "full";
+ 
+    @Builder.Default
+    private Boolean active = true;
 }

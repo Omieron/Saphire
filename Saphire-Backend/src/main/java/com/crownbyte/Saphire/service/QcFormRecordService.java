@@ -224,6 +224,16 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     }
 
     @Override
+    public QcFormRecordResponse updateNotes(Long id, String notes) {
+        QcFormRecordEntity entity = recordRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Record not found with id: " + id));
+ 
+        entity.setNotes(notes);
+        QcFormRecordEntity saved = recordRepository.save(entity);
+        return toResponse(saved);
+    }
+ 
+    @Override
     public void delete(Long id) {
         if (!recordRepository.existsById(id)) {
             throw new EntityNotFoundException("Record not found with id: " + id);

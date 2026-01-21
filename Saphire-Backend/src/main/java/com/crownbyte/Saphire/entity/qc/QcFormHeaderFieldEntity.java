@@ -46,4 +46,7 @@ public class QcFormHeaderFieldEntity {
 
     @Column(name = "default_value")
     private String defaultValue;
+ 
+    @Builder.Default
+    private Boolean active = true;
 }

@@ -84,6 +84,11 @@ export const qcRecordApi = {
     reject: (id: number, reason: string) =>
         api.post<ApiResponse<QcFormRecord>>(`/qc-records/${id}/reject?reason=${encodeURIComponent(reason)}`),
 
+    updateNotes: (id: number, notes: string) =>
+        api.put<ApiResponse<QcFormRecord>>(`/qc-records/${id}/notes`, notes, {
+            headers: { 'Content-Type': 'text/plain' }
+        }),
+
     delete: (id: number) =>
         api.delete<ApiResponse<void>>(`/qc-records/${id}`),
 };
