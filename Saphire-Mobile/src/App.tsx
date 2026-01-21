@@ -33,22 +33,23 @@ function AppContent() {
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
-  const isFirstRender = useRef(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const previousPath = useRef(location.pathname);
 
   useEffect(() => {
-    // Initial load - show for 1 second
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      previousPath.current = location.pathname;
+    // Initial load - show for 1 second minimum
+    if (!isInitialized) {
       const timer = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setShowLoading(false), 300);
+        setTimeout(() => {
+          setShowLoading(false);
+          setIsInitialized(true);
+        }, 300);
       }, 1000);
       return () => clearTimeout(timer);
     }
 
-    // Page transitions - ALWAYS show loading for minimum 400ms
+    // Page transitions after initialization
     if (previousPath.current !== location.pathname) {
       previousPath.current = location.pathname;
       setShowLoading(true);
@@ -60,7 +61,7 @@ function AppContent() {
       }, 400);
       return () => clearTimeout(timer);
     }
-  }, [location.pathname]);
+  }, [location.pathname, isInitialized]);
 
   return (
     <>
