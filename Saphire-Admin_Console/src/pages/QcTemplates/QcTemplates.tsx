@@ -359,9 +359,9 @@ export default function QcTemplates() {
                         </thead>
                         <tbody className="divide-y divide-[var(--color-border)]">
                             {loading ? (
-                                <tr><td colSpan={7} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
+                                <tr><td colSpan={8} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan={7} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.qcTemplates.noTemplates}</td></tr>
+                                <tr><td colSpan={8} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.qcTemplates.noTemplates}</td></tr>
                             ) : (
                                 filtered.map((template) => {
                                     const fieldCount = template.sections?.reduce((acc, s) => acc + (s.fields?.length || 0), 0) || 0;
@@ -397,7 +397,7 @@ export default function QcTemplates() {
                                                 </td>
                                             </tr>
                                             {expandedRow === template.id && template.sections && template.sections.length > 0 && (
-                                                <tr><td colSpan={7} className="px-12 py-4 bg-[var(--color-bg)]">
+                                                <tr><td colSpan={8} className="px-12 py-4 bg-[var(--color-bg)]">
                                                     <div className="grid gap-2">
                                                         {template.sections.flatMap(section =>
                                                             section.fields?.map((field) => (
