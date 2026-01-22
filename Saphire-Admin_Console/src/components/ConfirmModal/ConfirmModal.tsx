@@ -122,7 +122,10 @@ export default function ConfirmModal({
                     <button
                         onClick={onConfirm}
                         disabled={!isConfirmEnabled || loading}
-                        className={`flex-1 px-4 py-3 bg-gradient-to-r ${variant === 'danger' ? 'from-red-500 to-red-600 shadow-red-500/25' : 'from-teal-500 to-teal-600 shadow-teal-500/25'} text-white rounded-xl font-medium shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`flex-1 px-4 py-3 bg-gradient-to-r ${variant === 'danger'
+                            ? 'from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-red-500/25'
+                            : 'from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 shadow-teal-500/25'
+                            } text-white rounded-xl font-medium shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                         {loading ? t.common.loading : (confirmLabel || (variant === 'danger' ? t.common.delete : t.common.save))}
                     </button>

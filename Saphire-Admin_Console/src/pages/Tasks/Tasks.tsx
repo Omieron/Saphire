@@ -20,6 +20,7 @@ export default function Tasks() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [showForm, setShowForm] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [editItem, setEditItem] = useState<TaskAssignment | null>(null);
     const [saving, setSaving] = useState(false);
 
@@ -481,15 +482,19 @@ export default function Tasks() {
                     </div>
                 </div>
 
-                <div className="flex gap-4 justify-end pb-12">
-                    <button type="button" onClick={() => setShowForm(false)} className="px-8 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-hover)] text-[var(--color-text)] transition-colors font-bold uppercase tracking-wider text-xs">
+                <div className="flex gap-3 justify-end pb-12">
+                    <button type="button" onClick={() => setShowCancelConfirm(true)} className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface-hover)] transition-all">
                         {t.common.cancel}
                     </button>
-                    <button type="submit" disabled={saving} className="px-12 py-3 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-colors font-bold uppercase tracking-wider text-xs shadow-xl shadow-teal-500/20 disabled:opacity-50">
+                    <button type="submit" disabled={saving} className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50">
                         {saving ? t.common.loading : t.common.save}
                     </button>
                 </div>
             </form>
+
+            <ConfirmModal isOpen={showCancelConfirm} onClose={() => setShowCancelConfirm(false)} onConfirm={() => { setShowCancelConfirm(false); setShowForm(false); }}
+                title={t.common.cancelConfirm} message={t.common.cancelMessage} simple={true} variant="danger" confirmLabel={t.common.giveUp} cancelLabel={t.common.back} />
+
             <Toast isOpen={toast.show} onClose={() => setToast({ ...toast, show: false })} message={toast.message} type={toast.type} duration={3000} />
         </div>
     );

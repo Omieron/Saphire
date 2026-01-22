@@ -83,6 +83,7 @@ export default function QcTemplates() {
     const [allowPartialSave, setAllowPartialSave] = useState(true);
     const [controlPoints, setControlPoints] = useState<ControlPoint[]>([]);
     const [saving, setSaving] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<QcFormTemplate | null>(null);
@@ -610,13 +611,16 @@ export default function QcTemplates() {
 
             {/* Actions */}
             <div className="flex justify-end gap-3">
-                <button onClick={() => setShowBuilder(false)} className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface-hover)]">
+                <button onClick={() => setShowCancelConfirm(true)} className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface-hover)] transition-all">
                     {t.common.cancel}
                 </button>
-                <button onClick={handleSaveTemplate} disabled={saving} className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 disabled:opacity-50">
+                <button onClick={handleSaveTemplate} disabled={saving} className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50">
                     {saving ? t.common.loading : t.common.save}
                 </button>
             </div>
+
+            <ConfirmModal isOpen={showCancelConfirm} onClose={() => setShowCancelConfirm(false)} onConfirm={() => { setShowCancelConfirm(false); setShowBuilder(false); }}
+                title={t.common.cancelConfirm} message={t.common.cancelMessage} simple={true} variant="danger" confirmLabel={t.common.giveUp} cancelLabel={t.common.back} />
 
             {/* Field Modal - Beautiful Version */}
             {showFieldModal && (
