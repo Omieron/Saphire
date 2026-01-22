@@ -75,10 +75,12 @@ export const translations = {
             qcRecords: 'Records',
             settings: 'Settings',
             system: 'System',
+            logs: 'Logs',
         },
         // Settings
         settings: {
             title: 'Settings',
+            general: 'General',
             language: 'Language',
             selectLanguage: 'Select Application Language',
             english: 'English',
@@ -87,6 +89,17 @@ export const translations = {
             theme: 'Theme',
             light: 'Light',
             dark: 'Dark',
+        },
+        // System Logs
+        systemLogs: {
+            title: 'System Logs',
+            errorLogs: 'Error Logs',
+            ipAddress: 'IP Address',
+            source: 'Source',
+            date: 'Date',
+            description: 'Description',
+            noLogs: 'No logs found',
+            retrievedSuccess: 'Logs retrieved successfully',
         },
         // Dashboard
         dashboard: {
@@ -407,10 +420,12 @@ export const translations = {
             qcRecords: 'Kayıtlar',
             settings: 'Ayarlar',
             system: 'Sistem',
+            logs: 'Günlükler',
         },
         // Settings
         settings: {
             title: 'Ayarlar',
+            general: 'Genel',
             language: 'Dil',
             selectLanguage: 'Uygulama Dilini Seçin',
             english: 'İngilizce',
@@ -419,6 +434,17 @@ export const translations = {
             theme: 'Tema',
             light: 'Açık',
             dark: 'Koyu',
+        },
+        // System Logs
+        systemLogs: {
+            title: 'Sistem Günlükleri',
+            errorLogs: 'Hata Günlükleri',
+            ipAddress: 'IP Adresi',
+            source: 'Kaynak',
+            date: 'Tarih',
+            description: 'Açıklama',
+            noLogs: 'Günlük bulunamadı',
+            retrievedSuccess: 'Günlükler başarıyla getirildi',
         },
         // Dashboard
         dashboard: {

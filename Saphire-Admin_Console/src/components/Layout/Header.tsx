@@ -1,8 +1,6 @@
-import { useTheme } from '../../contexts/ThemeContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useSidebar } from '../../contexts/SidebarContext';
-import { Sun, Moon, Globe, HelpCircle, Menu } from 'lucide-react';
+import { HelpCircle, Menu } from 'lucide-react';
 import AlertCenter from '../AlertCenter/AlertCenter';
 
 interface HeaderProps {
@@ -10,8 +8,6 @@ interface HeaderProps {
 }
 
 export default function Header({ title }: HeaderProps) {
-    const { theme, toggleTheme } = useTheme();
-    const { language, toggleLanguage } = useLanguage();
     const { startTour } = useOnboarding();
     const { toggleCollapsed } = useSidebar();
 
@@ -44,32 +40,6 @@ export default function Header({ title }: HeaderProps) {
 
                 {/* Notifications */}
                 <AlertCenter />
-
-                {/* Language Toggle */}
-                <button
-                    onClick={toggleLanguage}
-                    data-tour="language"
-                    className="flex items-center gap-1 px-2 md:px-3 py-2 rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors"
-                    title={language === 'en' ? 'Switch to Turkish' : 'Türkçeye geç'}
-                >
-                    <Globe size={16} className="text-[var(--color-text-secondary)]" />
-                    <span className="text-xs md:text-sm font-medium text-[var(--color-text)]">
-                        {language.toUpperCase()}
-                    </span>
-                </button>
-
-                {/* Theme Toggle */}
-                <button
-                    onClick={toggleTheme}
-                    data-tour="theme"
-                    className="p-2 rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors"
-                >
-                    {theme === 'dark' ? (
-                        <Sun size={18} className="text-yellow-400" />
-                    ) : (
-                        <Moon size={18} className="text-slate-600" />
-                    )}
-                </button>
             </div>
         </header>
     );

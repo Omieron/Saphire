@@ -14,7 +14,6 @@ import Locations from './pages/Locations/Locations';
 import Machines from './pages/Machines/Machines';
 import Products from './pages/Products/Products';
 import Users from './pages/Users/Users';
-
 import QcTemplates from './pages/QcTemplates/QcTemplates';
 import QcRecords from './pages/QcRecords/QcRecords';
 import QcApprovalQueue from './pages/QcApprovalQueue/QcApprovalQueue';
