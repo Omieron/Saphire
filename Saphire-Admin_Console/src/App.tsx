@@ -1,12 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { OnboardingProvider } from './contexts/OnboardingContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Layout from './components/Layout/Layout';
 import PageLoader from './components/PageLoader/PageLoader';
+import StatusModal from './components/StatusModal/StatusModal';
 import Login from './pages/Login/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Companies from './pages/Companies/Companies';
@@ -36,6 +37,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  const { sessionExpired, clearSessionExpired, logout } = useAuth();
+  const { t } = useLanguage();
+
+  const handleSessionConfirm = () => {
+    logout();
+    clearSessionExpired();
+  };
+
   return (
     <>
       <PageLoader />
@@ -63,6 +72,14 @@ function AppRoutes() {
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
+
+      <StatusModal
+        isOpen={sessionExpired}
+        onClose={handleSessionConfirm}
+        title={t.auth.sessionExpired}
+        message={t.auth.sessionExpiredMessage}
+        type="warning"
+      />
     </>
   );
 }

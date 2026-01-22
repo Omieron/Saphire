@@ -8,8 +8,10 @@ interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
+    sessionExpired: boolean;
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
+    clearSessionExpired: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,13 +20,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [isLoading, setIsLoading] = useState(true);
+    const [sessionExpired, setSessionExpired] = useState(false);
 
     useEffect(() => {
+        const handleSessionExpired = () => {
+            setSessionExpired(true);
+        };
+
+        window.addEventListener('auth-session-expired', handleSessionExpired);
+
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
         setIsLoading(false);
+
+        return () => {
+            window.removeEventListener('auth-session-expired', handleSessionExpired);
+        };
     }, []);
 
     const login = async (username: string, password: string) => {
@@ -36,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setToken(newToken);
         setUser(newUser);
+        setSessionExpired(false);
     };
 
     const logout = () => {
@@ -45,6 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
     };
 
+    const clearSessionExpired = () => {
+        setSessionExpired(false);
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -52,8 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 token,
                 isAuthenticated: !!token,
                 isLoading,
+                sessionExpired,
                 login,
                 logout,
+                clearSessionExpired,
             }}
         >
             {children}

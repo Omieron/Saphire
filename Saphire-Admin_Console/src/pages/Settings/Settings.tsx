@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Globe, Moon, Sun, Check, Terminal, Shield, AlertCircle, Calendar, Hash, Settings as SettingsIcon } from 'lucide-react';
+import api from '../../api/axios';
 
 interface ErrorLog {
     id: number;
@@ -25,15 +26,8 @@ export default function Settings() {
             setIsLoadingLogs(true);
             const fetchLogs = async () => {
                 try {
-                    const response = await fetch('/api/v1/system/logs', {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        }
-                    });
-                    if (response.ok) {
-                        const result = await response.json();
-                        setLogs(Array.isArray(result.data) ? result.data : []);
-                    }
+                    const response = await api.get('/system/logs');
+                    setLogs(Array.isArray(response.data.data) ? response.data.data : []);
                 } catch (error) {
                     console.error('Failed to fetch logs:', error);
                 } finally {

@@ -65,7 +65,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             log.error("JWT filter: Error during authentication: {}", e.getMessage());
-            // Token invalid - continue without authentication
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + e.getMessage() + "\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);

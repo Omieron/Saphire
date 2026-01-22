@@ -38,10 +38,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            // Check if it's not the login request failing
+            if (!error.config.url?.endsWith('/login')) {
+                window.dispatchEvent(new CustomEvent('auth-session-expired'));
+            }
         }
         return Promise.reject(error);
     }
