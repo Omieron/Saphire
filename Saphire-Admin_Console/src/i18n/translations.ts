@@ -51,6 +51,8 @@ export const translations = {
         auth: {
             login: 'Sign In',
             logout: 'Logout',
+            logoutConfirm: 'Logout Confirmation',
+            logoutMessage: 'Are you sure you want to log out?',
             username: 'Username',
             password: 'Password',
             welcome: 'Welcome Back',
@@ -396,6 +398,8 @@ export const translations = {
         auth: {
             login: 'Giriş Yap',
             logout: 'Çıkış',
+            logoutConfirm: 'Çıkış Onayı',
+            logoutMessage: 'Çıkış yapmak istediğinize emin misiniz?',
             username: 'Kullanıcı Adı',
             password: 'Şifre',
             welcome: 'Hoş Geldiniz',

@@ -1,5 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { NavLink } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 import {
@@ -11,16 +10,13 @@ import {
     Users as UsersIcon,
     ClipboardList,
     FileCheck,
-    LogOut,
     ChevronLeft,
     Menu,
     Settings as SettingsIcon,
 } from 'lucide-react';
 
 export default function Sidebar() {
-    const { logout, user } = useAuth();
     const { t } = useLanguage();
-    const navigate = useNavigate();
     const { collapsed, toggleCollapsed } = useSidebar();
 
     const menuItems = [
@@ -38,11 +34,6 @@ export default function Sidebar() {
         { type: 'divider', label: t.sidebar.system, tourId: 'system' },
         { path: '/settings', icon: SettingsIcon, label: t.sidebar.settings },
     ];
-
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
 
     return (
         <aside
@@ -103,25 +94,6 @@ export default function Sidebar() {
                     );
                 })}
             </nav>
-
-            {/* User & Logout */}
-            <div className="p-3 border-t border-white/10">
-                {!collapsed && user && (
-                    <div className="mb-2 px-2">
-                        <p className="font-medium text-sm truncate">{user.fullName}</p>
-                        <p className="text-xs text-white/50 truncate">{user.role}</p>
-                    </div>
-                )}
-                <button
-                    onClick={handleLogout}
-                    title={collapsed ? t.auth.logout : undefined}
-                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors text-sm ${collapsed ? 'justify-center' : ''
-                        }`}
-                >
-                    <LogOut size={18} className="flex-shrink-0" />
-                    {!collapsed && <span className="font-medium">{t.auth.logout}</span>}
-                </button>
-            </div>
         </aside>
     );
 }
