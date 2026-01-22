@@ -38,7 +38,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { sessionExpired, clearSessionExpired, logout } = useAuth();
+  const { sessionExpired, clearSessionExpired, logout, connectionError, clearConnectionError } = useAuth();
   const { t } = useLanguage();
 
   const handleSessionConfirm = () => {
@@ -81,6 +81,14 @@ function AppRoutes() {
         title={t.auth.sessionExpired}
         message={t.auth.sessionExpiredMessage}
         type="warning"
+      />
+
+      <StatusModal
+        isOpen={connectionError}
+        onClose={clearConnectionError}
+        title={t.common.connectionError}
+        message={t.common.connectionErrorMessage}
+        type="error"
       />
     </>
   );

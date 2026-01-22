@@ -43,6 +43,9 @@ api.interceptors.response.use(
             if (!error.config.url?.endsWith('/login')) {
                 window.dispatchEvent(new CustomEvent('auth-session-expired'));
             }
+        } else if (!error.response) {
+            // No response from server (Network Error, Server Down, etc.)
+            window.dispatchEvent(new CustomEvent('api-connection-error'));
         }
         return Promise.reject(error);
     }

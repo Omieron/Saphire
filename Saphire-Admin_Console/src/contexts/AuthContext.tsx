@@ -12,6 +12,8 @@ interface AuthContextType {
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
     clearSessionExpired: () => void;
+    connectionError: boolean;
+    clearConnectionError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,13 +23,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [isLoading, setIsLoading] = useState(true);
     const [sessionExpired, setSessionExpired] = useState(false);
+    const [connectionError, setConnectionError] = useState(false);
 
     useEffect(() => {
         const handleSessionExpired = () => {
             setSessionExpired(true);
         };
 
+        const handleConnectionError = () => {
+            setConnectionError(true);
+        };
+
         window.addEventListener('auth-session-expired', handleSessionExpired);
+        window.addEventListener('api-connection-error', handleConnectionError);
 
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
@@ -37,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return () => {
             window.removeEventListener('auth-session-expired', handleSessionExpired);
+            window.removeEventListener('api-connection-error', handleConnectionError);
         };
     }, []);
 
@@ -63,6 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSessionExpired(false);
     };
 
+    const clearConnectionError = () => {
+        setConnectionError(false);
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -74,6 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 login,
                 logout,
                 clearSessionExpired,
+                connectionError,
+                clearConnectionError,
             }}
         >
             {children}
