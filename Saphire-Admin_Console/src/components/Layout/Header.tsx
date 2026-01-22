@@ -2,7 +2,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useSidebar } from '../../contexts/SidebarContext';
-import { Sun, Moon, Search, Globe, HelpCircle, Menu } from 'lucide-react';
+import { Sun, Moon, Globe, HelpCircle, Menu } from 'lucide-react';
 import AlertCenter from '../AlertCenter/AlertCenter';
 
 interface HeaderProps {
@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export default function Header({ title }: HeaderProps) {
     const { theme, toggleTheme } = useTheme();
-    const { language, toggleLanguage, t } = useLanguage();
+    const { language, toggleLanguage } = useLanguage();
     const { startTour } = useOnboarding();
     const { toggleCollapsed } = useSidebar();
 
@@ -33,19 +33,6 @@ export default function Header({ title }: HeaderProps) {
 
             {/* Right side - Actions */}
             <div className="flex items-center gap-1 md:gap-2">
-                {/* Search - Hidden on mobile */}
-                <div className="relative hidden md:block">
-                    <Search
-                        size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
-                    />
-                    <input
-                        type="text"
-                        placeholder={t.common.search + '...'}
-                        className="pl-9 pr-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-48 lg:w-56"
-                    />
-                </div>
-
                 {/* Help/Tour */}
                 <button
                     onClick={startTour}

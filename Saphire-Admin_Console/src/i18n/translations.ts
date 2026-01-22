@@ -407,7 +407,7 @@ export const translations = {
             addLocation: 'Lokasyon Ekle',
             addMachine: 'Makine Ekle',
             addProduct: 'Ürün Ekle',
-            createTemplate: 'QC Şablonu Oluştur',
+            createTemplate: 'Kalite Kontrol Şablonu Oluştur',
             newProduction: 'Yeni Üretim',
         },
         // Companies
@@ -501,7 +501,7 @@ export const translations = {
         },
         // QC Templates
         qcTemplates: {
-            title: 'QC Şablonları',
+            title: 'Kalite Kontrol Şablonları',
             addTemplate: 'Şablon Ekle',
             editTemplate: 'Şablon Düzenle',
             searchTemplates: 'Şablon ara...',
@@ -572,7 +572,7 @@ export const translations = {
         },
         // QC Records
         qcRecords: {
-            title: 'QC Kayıtları',
+            title: 'Kalite Kontrol Kayıtları',
             searchRecords: 'Kayıt ara...',
             noRecords: 'Kayıt bulunamadı',
             template: 'Şablon',
@@ -622,7 +622,7 @@ export const translations = {
             production: 'Üretim',
             productionDesc: 'Ürün rotaları oluşturun ve üretim takibi yapın.',
             qc: 'Kalite Kontrol',
-            qcDesc: 'QC şablonları tasarlayın ve doldurulan kayıtları onay iş akışıyla inceleyin.',
+            qcDesc: 'Kalite Kontrol şablonları tasarlayın ve doldurulan kayıtları onay iş akışıyla inceleyin.',
             theme: 'Tema Değiştir',
             themeDesc: 'Rahat görüntüleme için açık ve koyu mod arasında geçiş yapın.',
             language: 'Dil',

@@ -18,6 +18,7 @@ export default function Layout() {
         '/products': t.sidebar.products,
         '/users': t.sidebar.users,
         '/qc-templates': t.qcTemplates.title,
+        '/qc-approval': t.qcRecords.reviewQueue,
         '/qc-records': t.qcRecords.title,
     };
 
