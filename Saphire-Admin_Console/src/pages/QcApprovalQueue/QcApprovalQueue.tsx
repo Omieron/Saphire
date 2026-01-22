@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, FileCheck, Eye, ThumbsUp, ThumbsDown, AlertCircle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, FileCheck, Eye, ThumbsUp, ThumbsDown, RotateCcw, ChevronDown } from 'lucide-react';
 import { qcRecordApi } from '../../api/qcRecord.api';
 import type { QcFormRecord } from '../../api/qcRecord.api';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -28,6 +28,18 @@ export default function QcApprovalQueue() {
     const [approveId, setApproveId] = useState<number | null>(null);
     const [statusModal, setStatusModal] = useState({ isOpen: false, title: '', message: '', type: 'success' as StatusModalType });
     const [manualResult, setManualResult] = useState<'PASS' | 'FAIL' | 'PARTIAL'>('PASS');
+
+    // Filter states
+    const [filterTemplate, setFilterTemplate] = useState('');
+    const [filterMachine, setFilterMachine] = useState('');
+    const [filterUser, setFilterUser] = useState('');
+    const [filterStartDate, setFilterStartDate] = useState('');
+    const [filterEndDate, setFilterEndDate] = useState('');
+
+    // Derived unique values for filters
+    const uniqueTemplates = Array.from(new Set(records.map(r => r.templateName))).filter(Boolean).sort();
+    const uniqueMachines = Array.from(new Set(records.map(r => r.machineName || r.productInstanceSerial || ''))).filter(Boolean).sort();
+    const uniqueUsers = Array.from(new Set(records.map(r => r.filledByName))).filter(Boolean).sort();
 
     const getStatusLabel = (status: string) => {
         switch (status) {
@@ -152,30 +164,133 @@ export default function QcApprovalQueue() {
     };
 
     const filtered = records.filter((r) => {
-        const matchesSearch = r.templateName.toLowerCase().includes(search.toLowerCase()) ||
-            r.templateCode.toLowerCase().includes(search.toLowerCase()) ||
-            (r.productInstanceSerial || '').toLowerCase().includes(search.toLowerCase());
-        return matchesSearch;
+        const searchLower = search.toLowerCase();
+        const matchesSearch = (
+            (r.templateName || '').toLowerCase().includes(searchLower) ||
+            (r.templateCode || '').toLowerCase().includes(searchLower) ||
+            (r.machineName || '').toLowerCase().includes(searchLower) ||
+            (r.productInstanceSerial || '').toLowerCase().includes(searchLower) ||
+            (r.filledByName || '').toLowerCase().includes(searchLower) ||
+            r.id.toString().includes(searchLower)
+        );
+
+        const matchesTemplate = filterTemplate === '' || r.templateName === filterTemplate;
+        const matchesMachine = filterMachine === '' || (r.machineName || r.productInstanceSerial || '') === filterMachine;
+        const matchesUser = filterUser === '' || r.filledByName === filterUser;
+
+        const recordDate = r.submittedAt ? new Date(r.submittedAt).toISOString().split('T')[0] : '';
+        const matchesStart = !filterStartDate || recordDate >= filterStartDate;
+        const matchesEnd = !filterEndDate || recordDate <= filterEndDate;
+
+        return matchesSearch && matchesTemplate && matchesMachine && matchesUser && matchesStart && matchesEnd;
     });
+
+    const resetFilters = () => {
+        setSearch('');
+        setFilterTemplate('');
+        setFilterMachine('');
+        setFilterUser('');
+        setFilterStartDate('');
+        setFilterEndDate('');
+    };
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
-                        <FileCheck className="text-teal-500" />
-                        {t.qcRecords.reviewQueue}
-                    </h2>
-                    <div className="relative ml-4">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
-                        <input type="text" placeholder={t.qcRecords.searchRecords} value={search} onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64" />
+            <div className="flex flex-col xl:flex-row gap-4 items-end bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] shadow-sm">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
+                    {/* Search */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.common.search}</label>
+                        <div className="relative">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
+                            <input
+                                type="text"
+                                placeholder={t.qcRecords.searchRecords}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Template Filter */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.template}</label>
+                        <div className="relative">
+                            <select
+                                value={filterTemplate}
+                                onChange={(e) => setFilterTemplate(e.target.value)}
+                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium"
+                            >
+                                <option value="">{t.qcRecords.allTemplates}</option>
+                                {uniqueTemplates.map(name => <option key={name} value={name}>{name}</option>)}
+                            </select>
+                            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {/* Machine Filter */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.machineInstance}</label>
+                        <div className="relative">
+                            <select
+                                value={filterMachine}
+                                onChange={(e) => setFilterMachine(e.target.value)}
+                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium"
+                            >
+                                <option value="">{t.qcRecords.allMachines}</option>
+                                {uniqueMachines.map(name => <option key={name} value={name}>{name}</option>)}
+                            </select>
+                            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {/* User Filter */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.filledBy}</label>
+                        <div className="relative">
+                            <select
+                                value={filterUser}
+                                onChange={(e) => setFilterUser(e.target.value)}
+                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium"
+                            >
+                                <option value="">{t.qcRecords.allUsers}</option>
+                                {uniqueUsers.map(name => <option key={name as string} value={name as string}>{name}</option>)}
+                            </select>
+                            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {/* Start Date */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.startDate || 'Başlangıç'}</label>
+                        <input
+                            type="date"
+                            value={filterStartDate}
+                            onChange={(e) => setFilterStartDate(e.target.value)}
+                            className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                        />
+                    </div>
+
+                    {/* End Date */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.endDate || 'Bitiş'}</label>
+                        <input
+                            type="date"
+                            value={filterEndDate}
+                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                        />
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] bg-teal-500/5 px-4 py-2 rounded-lg border border-teal-500/10">
-                    <AlertCircle size={16} className="text-teal-500" />
-                    <span className="font-bold text-teal-600">{records.length}</span> {t.qcRecords.pendingApproval}
-                </div>
+
+                <button
+                    onClick={resetFilters}
+                    className="p-2.5 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-teal-600 hover:border-teal-500/30 hover:bg-teal-500/5 rounded-lg transition-all"
+                    title={t.qcRecords.resetFilters}
+                >
+                    <RotateCcw size={18} />
+                </button>
             </div>
 
             <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden shadow-sm">
@@ -367,7 +482,7 @@ export default function QcApprovalQueue() {
                         <div className="px-6 py-4 border-t border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg)]/50 rounded-b-2xl">
                             <div className="flex items-center gap-3">
                                 <button
-                                    onClick={() => { setShowDetailModal(false); setApproveId(selectedRecord.id); }}
+                                    onClick={() => { setShowDetailModal(false); setManualResult('PASS'); setApproveId(selectedRecord.id); }}
                                     disabled={processing}
                                     className="px-6 py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg shadow-green-500/20"
                                 >
@@ -406,19 +521,18 @@ export default function QcApprovalQueue() {
                     {/* Manual Result Selection */}
                     <div className="bg-[var(--color-bg)] p-4 rounded-xl border border-[var(--color-border)]">
                         <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-3 uppercase tracking-wider">Nihai Sonuç Kararı</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['PASS', 'FAIL', 'PARTIAL'] as const).map((res) => (
+                        <div className="grid grid-cols-2 gap-2">
+                            {(['FAIL', 'PARTIAL'] as const).map((res) => (
                                 <button
                                     key={res}
                                     onClick={() => setManualResult(res)}
                                     className={`py-2 text-[10px] font-bold rounded-lg border transition-all uppercase ${manualResult === res
-                                        ? (res === 'PASS' ? 'bg-green-500 border-green-600 text-white shadow-lg shadow-green-500/20' :
-                                            res === 'FAIL' ? 'bg-red-500 border-red-600 text-white shadow-lg shadow-red-500/20' :
-                                                'bg-orange-500 border-orange-600 text-white shadow-lg shadow-orange-500/20')
+                                        ? (res === 'FAIL' ? 'bg-red-500 border-red-600 text-white shadow-lg shadow-red-500/20' :
+                                            'bg-orange-500 border-orange-600 text-white shadow-lg shadow-orange-500/20')
                                         : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-text-secondary)]'
                                         }`}
                                 >
-                                    {res === 'PASS' ? 'GEÇTİ' : res === 'FAIL' ? 'KALDI' : 'KISMİ'}
+                                    {res === 'FAIL' ? 'KALDI' : 'KISMİ'}
                                 </button>
                             ))}
                         </div>
@@ -454,19 +568,18 @@ export default function QcApprovalQueue() {
             >
                 <div className="bg-[var(--color-bg)] p-4 rounded-xl border border-[var(--color-border)]">
                     <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-3 uppercase tracking-wider">Nihai Sonuç Kararı</label>
-                    <div className="grid grid-cols-3 gap-2">
-                        {(['PASS', 'FAIL', 'PARTIAL'] as const).map((res) => (
+                    <div className="grid grid-cols-2 gap-2">
+                        {(['PASS', 'PARTIAL'] as const).map((res) => (
                             <button
                                 key={res}
                                 onClick={() => setManualResult(res)}
                                 className={`py-2 text-[10px] font-bold rounded-lg border transition-all uppercase ${manualResult === res
                                     ? (res === 'PASS' ? 'bg-green-500 border-green-600 text-white shadow-lg shadow-green-500/20' :
-                                        res === 'FAIL' ? 'bg-red-500 border-red-600 text-white shadow-lg shadow-red-500/20' :
-                                            'bg-orange-500 border-orange-600 text-white shadow-lg shadow-orange-500/20')
+                                        'bg-orange-500 border-orange-600 text-white shadow-lg shadow-orange-500/20')
                                     : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-text-secondary)]'
                                     }`}
                             >
-                                {res === 'PASS' ? 'GEÇTİ' : res === 'FAIL' ? 'KALDI' : 'KISMİ'}
+                                {res === 'PASS' ? 'GEÇTİ' : 'KISMİ'}
                             </button>
                         ))}
                     </div>

@@ -282,6 +282,14 @@ export const translations = {
             workflow: 'Workflow',
             approvalActions: 'Approval Actions',
             notesAndFeedback: 'Notes & Feedback',
+            // Filters
+            allTemplates: 'All Templates',
+            allMachines: 'All Machines',
+            allUsers: 'All Operators',
+            resetFilters: 'Reset Filters',
+            filters: 'Filters',
+            startDate: 'Start Date',
+            endDate: 'End Date',
         },
         // Onboarding
         onboarding: {
@@ -592,6 +600,14 @@ export const translations = {
             workflow: 'İş Akışı',
             approvalActions: 'Onay İşlemleri',
             notesAndFeedback: 'Notlar ve Geri Bildirim',
+            // Filters
+            allTemplates: 'Tüm Şablonlar',
+            allMachines: 'Tüm Makineler',
+            allUsers: 'Tüm Operatörler',
+            resetFilters: 'Filtreleri Sıfırla',
+            filters: 'Filtreler',
+            startDate: 'Başlangıç Tarihi',
+            endDate: 'Bitiş Tarihi',
         },
         // Onboarding
         onboarding: {
