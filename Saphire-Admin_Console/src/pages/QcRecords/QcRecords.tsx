@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Clock, FileCheck, Eye, RotateCcw, ChevronDown } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, FileCheck, FileSearch, RotateCcw, ChevronDown } from 'lucide-react';
 import { qcRecordApi } from '../../api/qcRecord.api';
 import type { QcFormRecord } from '../../api/qcRecord.api';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -99,7 +99,7 @@ export default function QcRecords() {
     return (
         <div className="space-y-4">
             <div className="flex flex-col xl:flex-row gap-4 items-end bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] shadow-sm">
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 w-full">
                     {/* Search */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.common.search}</label>
@@ -110,7 +110,7 @@ export default function QcRecords() {
                                 placeholder={t.qcRecords.searchRecords}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                                className="w-full pl-9 pr-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium h-[40px]"
                             />
                         </div>
                     </div>
@@ -122,7 +122,7 @@ export default function QcRecords() {
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium"
+                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium h-[40px]"
                             >
                                 <option value="">{t.instances.allStatuses}</option>
                                 {Object.keys(statusColors).map((s) => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
@@ -138,7 +138,7 @@ export default function QcRecords() {
                             <select
                                 value={filterTemplate}
                                 onChange={(e) => setFilterTemplate(e.target.value)}
-                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium"
+                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium h-[40px]"
                             >
                                 <option value="">{t.qcRecords.allTemplates}</option>
                                 {uniqueTemplates.map(name => <option key={name as string} value={name as string}>{name}</option>)}
@@ -154,7 +154,7 @@ export default function QcRecords() {
                             <select
                                 value={filterMachine}
                                 onChange={(e) => setFilterMachine(e.target.value)}
-                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium"
+                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium h-[40px]"
                             >
                                 <option value="">{t.qcRecords.allMachines}</option>
                                 {uniqueMachines.map(name => <option key={name as string} value={name as string}>{name}</option>)}
@@ -170,7 +170,7 @@ export default function QcRecords() {
                             <select
                                 value={filterUser}
                                 onChange={(e) => setFilterUser(e.target.value)}
-                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium"
+                                className="w-full pl-3 pr-10 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all font-medium h-[40px]"
                             >
                                 <option value="">{t.qcRecords.allUsers}</option>
                                 {uniqueUsers.map(name => <option key={name as string} value={name as string}>{name}</option>)}
@@ -179,39 +179,39 @@ export default function QcRecords() {
                         </div>
                     </div>
 
-                    {/* Start Date */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.startDate}</label>
-                        <input
-                            type="date"
-                            value={filterStartDate}
-                            onChange={(e) => setFilterStartDate(e.target.value)}
-                            className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
-                        />
-                    </div>
-
-                    {/* End Date */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.endDate}</label>
-                        <input
-                            type="date"
-                            value={filterEndDate}
-                            onChange={(e) => setFilterEndDate(e.target.value)}
-                            className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
-                        />
+                    {/* Start/End Date Group */}
+                    <div className="lg:col-span-2 grid grid-cols-2 gap-2">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.startDate}</label>
+                            <input
+                                type="date"
+                                value={filterStartDate}
+                                onChange={(e) => setFilterStartDate(e.target.value)}
+                                className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium h-[40px]"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider ml-1">{t.qcRecords.endDate}</label>
+                            <input
+                                type="date"
+                                value={filterEndDate}
+                                onChange={(e) => setFilterEndDate(e.target.value)}
+                                className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium h-[40px]"
+                            />
+                        </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <button
                         onClick={resetFilters}
-                        className="p-2.5 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-teal-600 hover:border-teal-500/30 hover:bg-teal-500/5 rounded-lg transition-all"
+                        className="p-2.5 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-teal-600 hover:border-teal-500/30 hover:bg-teal-500/5 rounded-lg transition-all h-[40px] flex items-center justify-center min-w-[40px]"
                         title={t.qcRecords.resetFilters}
                     >
                         <RotateCcw size={18} />
                     </button>
 
-                    <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] bg-teal-500/5 px-3 py-2.5 rounded-lg border border-teal-500/10 h-[42px] whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] bg-teal-500/5 px-3 py-2.5 rounded-lg border border-teal-500/10 h-[40px] whitespace-nowrap">
                         <span className="font-bold text-teal-600">{records.filter(r => r.status === 'SUBMITTED').length}</span> {t.qcRecords.pendingApproval}
                     </div>
                 </div>
@@ -266,7 +266,9 @@ export default function QcRecords() {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">{record.submittedAt ? new Date(record.submittedAt).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                                         <td className="px-6 py-4 text-right">
-                                            <button onClick={() => openDetailModal(record)} className="p-2 text-[var(--color-text-secondary)] hover:text-teal-500 hover:bg-teal-500/10 rounded-lg transition-colors ml-1" title={t.common.view}><Eye size={16} /></button>
+                                            <button onClick={() => openDetailModal(record)} className="p-2 text-teal-600 hover:bg-teal-500/10 rounded-lg transition-colors ml-1" title={t.common.view}>
+                                                <FileSearch size={18} />
+                                            </button>
                                         </td>
                                     </tr>
                                 );
