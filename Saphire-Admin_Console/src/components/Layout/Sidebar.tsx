@@ -8,12 +8,13 @@ import {
     MapPin,
     Cog,
     Package,
-    Users,
+    Users as UsersIcon,
     ClipboardList,
     FileCheck,
     LogOut,
     ChevronLeft,
     Menu,
+    Settings as SettingsIcon,
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -29,11 +30,13 @@ export default function Sidebar() {
         { path: '/locations', icon: MapPin, label: t.sidebar.locations },
         { path: '/machines', icon: Cog, label: t.sidebar.machines },
         { path: '/products', icon: Package, label: t.sidebar.products },
-        { path: '/users', icon: Users, label: t.sidebar.users },
+        { path: '/users', icon: UsersIcon, label: t.sidebar.users },
         { type: 'divider', label: t.sidebar.qc, tourId: 'qc' },
         { path: '/qc-templates', icon: ClipboardList, label: t.sidebar.qcTemplates },
         { path: '/qc-approval', icon: FileCheck, label: t.qcRecords.reviewQueue },
         { path: '/qc-records', icon: ClipboardList, label: t.sidebar.qcRecords },
+        { type: 'divider', label: t.sidebar.system, tourId: 'system' },
+        { path: '/settings', icon: SettingsIcon, label: t.sidebar.settings },
     ];
 
     const handleLogout = () => {

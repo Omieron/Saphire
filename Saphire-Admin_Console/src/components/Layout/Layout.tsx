@@ -20,6 +20,7 @@ export default function Layout() {
         '/qc-templates': t.qcTemplates.title,
         '/qc-approval': t.qcRecords.reviewQueue,
         '/qc-records': t.qcRecords.title,
+        '/settings': t.settings.title,
     };
 
     const title = pageTitles[location.pathname] || 'Saphire Admin';

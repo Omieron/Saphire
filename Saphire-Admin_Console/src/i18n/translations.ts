@@ -73,6 +73,20 @@ export const translations = {
             qc: 'Quality Control',
             qcTemplates: 'Templates',
             qcRecords: 'Records',
+            settings: 'Settings',
+            system: 'System',
+        },
+        // Settings
+        settings: {
+            title: 'Settings',
+            language: 'Language',
+            selectLanguage: 'Select Application Language',
+            english: 'English',
+            turkish: 'Turkish',
+            appearance: 'Appearance',
+            theme: 'Theme',
+            light: 'Light',
+            dark: 'Dark',
         },
         // Dashboard
         dashboard: {
@@ -391,6 +405,20 @@ export const translations = {
             qc: 'Kalite Kontrol',
             qcTemplates: 'Şablonlar',
             qcRecords: 'Kayıtlar',
+            settings: 'Ayarlar',
+            system: 'Sistem',
+        },
+        // Settings
+        settings: {
+            title: 'Ayarlar',
+            language: 'Dil',
+            selectLanguage: 'Uygulama Dilini Seçin',
+            english: 'İngilizce',
+            turkish: 'Türkçe',
+            appearance: 'Görünüm',
+            theme: 'Tema',
+            light: 'Açık',
+            dark: 'Koyu',
         },
         // Dashboard
         dashboard: {
