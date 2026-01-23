@@ -104,10 +104,10 @@ public class LocationService implements LocationServiceImpl {
 
     @Override
     public void delete(Long id) {
-        if (!locationRepository.existsById(id)) {
-            throw new EntityNotFoundException("Location not found with id: " + id);
-        }
-        locationRepository.deleteById(id);
+        LocationEntity entity = locationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
+        entity.setActive(false);
+        locationRepository.save(entity);
     }
 
     private LocationResponse toResponse(LocationEntity entity) {

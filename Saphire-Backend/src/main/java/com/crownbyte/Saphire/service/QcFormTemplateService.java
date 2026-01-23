@@ -362,10 +362,10 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
 
     @Override
     public void delete(Long id) {
-        if (!templateRepository.existsById(id)) {
-            throw new EntityNotFoundException("QC Template not found with id: " + id);
-        }
-        templateRepository.deleteById(id);
+        QcFormTemplateEntity entity = templateRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("QC Template not found with id: " + id));
+        entity.setActive(false);
+        templateRepository.save(entity);
     }
 
     @Override

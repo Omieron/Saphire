@@ -24,6 +24,7 @@ export default function Products() {
     const [formData, setFormData] = useState<ProductRequest>({ name: '', code: '', description: '', active: true });
     const [saving, setSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [showInactive, setShowInactive] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -66,6 +67,10 @@ export default function Products() {
     useEffect(() => {
         fetchData();
     }, [debouncedSearch]);
+
+    const filtered = products.filter((p) => {
+        return showInactive || p.active;
+    });
 
     const handleAdd = () => { setEditItem(null); setFormData({ name: '', code: '', description: '', active: true }); setShowForm(true); };
 
@@ -122,10 +127,22 @@ export default function Products() {
             {!showForm ? (
                 <>
                     <div className="flex items-center justify-between gap-4 flex-wrap">
-                        <div className="relative" data-tour="products-search">
-                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
-                            <input type="text" placeholder={t.products.searchProducts} value={search} onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 pr-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64 h-[40px]" />
+                        <div className="flex items-center gap-3">
+                            <div className="relative" data-tour="products-search">
+                                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
+                                <input type="text" placeholder={t.products.searchProducts} value={search} onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-10 pr-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64 h-[40px]" />
+                            </div>
+                            <button
+                                onClick={() => setShowInactive(!showInactive)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all h-[40px] text-xs font-medium ${showInactive
+                                    ? 'bg-teal-500/10 border-teal-500 text-teal-600 shadow-sm'
+                                    : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/50'
+                                    }`}
+                            >
+                                {showInactive ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                                {showInactive ? t.common.active + ' + ' + t.common.inactive : t.common.active}
+                            </button>
                         </div>
                         <button onClick={handleAdd} data-tour="products-add" className="flex items-center gap-2 px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-semibold h-[40px]">
                             <Plus size={18} />{t.products.addProduct}
@@ -147,10 +164,10 @@ export default function Products() {
                             <tbody className="divide-y divide-[var(--color-border)]">
                                 {loading ? (
                                     <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
-                                ) : products.length === 0 ? (
+                                ) : filtered.length === 0 ? (
                                     <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.products.noProducts}</td></tr>
                                 ) : (
-                                    products.map((product) => (
+                                    filtered.map((product) => (
                                         <tr key={product.id} className="hover:bg-[var(--color-surface-hover)]">
                                             <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">#{product.id}</td>
                                             <td className="px-6 py-4 text-sm font-medium text-[var(--color-text)]">{product.name}</td>

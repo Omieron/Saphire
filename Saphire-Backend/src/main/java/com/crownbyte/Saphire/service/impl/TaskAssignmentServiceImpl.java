@@ -126,10 +126,10 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
 
     @Override
     public void delete(Long id) {
-        if (!taskAssignmentRepository.existsById(id)) {
-            throw new EntityNotFoundException("Assignment not found with id: " + id);
-        }
-        taskAssignmentRepository.deleteById(id);
+        TaskAssignmentEntity entity = taskAssignmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found with id: " + id));
+        entity.setActive(false);
+        taskAssignmentRepository.save(entity);
     }
 
     @Override

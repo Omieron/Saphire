@@ -132,10 +132,10 @@ public class MachineService implements MachineServiceImpl {
 
     @Override
     public void delete(Long id) {
-        if (!machineRepository.existsById(id)) {
-            throw new EntityNotFoundException("Machine not found with id: " + id);
-        }
-        machineRepository.deleteById(id);
+        MachineEntity entity = machineRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Machine not found with id: " + id));
+        entity.setActive(false);
+        machineRepository.save(entity);
     }
 
     private MachineResponse toResponse(MachineEntity entity) {

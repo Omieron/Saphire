@@ -33,6 +33,7 @@ export default function Users() {
     const [formData, setFormData] = useState<UserRequest>({ username: '', password: '', email: '', fullName: '', role: 'OPERATOR', active: true });
     const [saving, setSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [showInactive, setShowInactive] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -141,7 +142,8 @@ export default function Users() {
 
     const filtered = users.filter((u) => {
         const matchesRole = filterRole === '' || u.role === filterRole;
-        return matchesRole;
+        const matchesActive = showInactive || u.active;
+        return matchesRole && matchesActive;
     });
 
     return (
@@ -165,6 +167,16 @@ export default function Users() {
                                     <option value="OPERATOR">{t.users.roleOperator}</option>
                                 </select>
                             </div>
+                            <button
+                                onClick={() => setShowInactive(!showInactive)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all h-[40px] text-xs font-medium ${showInactive
+                                    ? 'bg-teal-500/10 border-teal-500 text-teal-600 shadow-sm'
+                                    : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/50'
+                                    }`}
+                            >
+                                {showInactive ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                                {showInactive ? t.common.active + ' + ' + t.common.inactive : t.common.active}
+                            </button>
                         </div>
                         <button onClick={handleAdd} data-tour="users-add" className="flex items-center gap-2 px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-semibold h-[40px]">
                             <Plus size={18} />{t.users.addUser}

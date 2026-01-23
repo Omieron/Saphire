@@ -29,6 +29,7 @@ export default function Locations() {
     const [formData, setFormData] = useState<LocationRequest>({ companyId: 0, name: '', code: '', address: '', active: true });
     const [saving, setSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [showInactive, setShowInactive] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<Location | null>(null);
@@ -133,7 +134,8 @@ export default function Locations() {
 
     const filtered = locations.filter((loc) => {
         const matchesCompany = filterCompany === '' || loc.companyId === filterCompany;
-        return matchesCompany;
+        const matchesActive = showInactive || loc.active;
+        return matchesCompany && matchesActive;
     });
 
     return (
@@ -155,6 +157,16 @@ export default function Locations() {
                                     {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
+                            <button
+                                onClick={() => setShowInactive(!showInactive)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all h-[40px] text-xs font-medium ${showInactive
+                                    ? 'bg-teal-500/10 border-teal-500 text-teal-600 shadow-sm'
+                                    : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/50'
+                                    }`}
+                            >
+                                {showInactive ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                                {showInactive ? t.common.active + ' + ' + t.common.inactive : t.common.active}
+                            </button>
                         </div>
                         <button onClick={handleAdd} data-tour="locations-add" className="flex items-center gap-2 px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-semibold h-[40px]">
                             <Plus size={18} />{t.locations.addLocation}

@@ -114,10 +114,10 @@ public class UserService implements UserServiceImpl {
 
     @Override
     public void delete(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException("User not found with id: " + id);
-        }
-        userRepository.deleteById(id);
+        UserEntity entity = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+        entity.setActive(false);
+        userRepository.save(entity);
     }
 
     @Override

@@ -88,10 +88,10 @@ public class ProductService implements ProductServiceImpl {
 
     @Override
     public void delete(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new EntityNotFoundException("Product not found with id: " + id);
-        }
-        productRepository.deleteById(id);
+        ProductEntity entity = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
+        entity.setActive(false);
+        productRepository.save(entity);
     }
 
     @Override
