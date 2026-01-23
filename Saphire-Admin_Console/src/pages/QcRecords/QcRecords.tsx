@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Clock, FileCheck, FileSearch, RotateCcw, ChevronDown } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, FileCheck, FileSearch, RotateCcw, ChevronDown, FileDown } from 'lucide-react';
 import { qcRecordApi } from '../../api/qcRecord.api';
 import type { QcFormRecord } from '../../api/qcRecord.api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { exportQcRecordsToPdf, exportSingleQcRecordToPdf } from '../../utils/export.utils';
 
 const statusColors: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
     DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-500', icon: Clock },
@@ -20,7 +21,7 @@ const resultColors: Record<string, { bg: string; text: string }> = {
 };
 
 export default function QcRecords() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [records, setRecords] = useState<QcFormRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -224,6 +225,15 @@ export default function QcRecords() {
                     <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] bg-teal-500/5 px-3 py-2.5 rounded-lg border border-teal-500/10 h-[40px] whitespace-nowrap">
                         <span className="font-bold text-teal-600">{records.filter(r => r.status === 'SUBMITTED').length}</span> {t.qcRecords.pendingApproval}
                     </div>
+
+                    <button
+                        onClick={() => exportQcRecordsToPdf(records, t, language)}
+                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all font-bold h-[40px] shadow-sm shadow-teal-500/20 active:scale-95"
+                        title={`${t.common.all} PDF`}
+                    >
+                        <FileDown size={18} />
+                        <span className="hidden sm:inline">{t.common.all} PDF</span>
+                    </button>
                 </div>
             </div>
 
@@ -449,7 +459,14 @@ export default function QcRecords() {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="px-6 py-4 border-t border-[var(--color-border)] flex items-center justify-end bg-[var(--color-bg)]/50 rounded-b-2xl">
+                        <div className="px-6 py-4 border-t border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg)]/50 rounded-b-2xl">
+                            <button
+                                onClick={() => exportSingleQcRecordToPdf(selectedRecord, t, language)}
+                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500/10 text-teal-600 rounded-xl text-sm font-bold hover:bg-teal-500/20 active:scale-95 transition-all border border-teal-500/20"
+                            >
+                                <FileDown size={18} />
+                                PDF {t.common.save}
+                            </button>
                             <button onClick={() => setShowDetailModal(false)} className="px-6 py-2 bg-[var(--color-text)] text-[var(--color-surface)] rounded-xl text-sm font-bold hover:opacity-90 transition-opacity">
                                 {t.common.close}
                             </button>

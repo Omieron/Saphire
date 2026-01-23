@@ -315,8 +315,8 @@ export default function QcTemplates() {
                         <button
                             onClick={() => setShowInactive(!showInactive)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all h-[40px] text-xs font-medium ${showInactive
-                                    ? 'bg-teal-500/10 border-teal-500 text-teal-600 shadow-sm'
-                                    : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/50'
+                                ? 'bg-teal-500/10 border-teal-500 text-teal-600 shadow-sm'
+                                : 'bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/50'
                                 }`}
                         >
                             {showInactive ? <CheckCircle size={14} /> : <XCircle size={14} />}
@@ -344,10 +344,10 @@ export default function QcTemplates() {
                         <tbody className="divide-y divide-[var(--color-border)]">
                             {loading ? (
                                 <tr><td colSpan={7} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
-                            ) : templates.length === 0 ? (
+                            ) : filtered.length === 0 ? (
                                 <tr><td colSpan={7} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.qcTemplates.noTemplates}</td></tr>
                             ) : (
-                                templates.map((template) => {
+                                filtered.map((template) => {
                                     const fieldCount = template.sections?.reduce((acc, s) => acc + (s.fields?.length || 0), 0) || 0;
                                     return (
                                         <React.Fragment key={template.id}>

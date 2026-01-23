@@ -21,7 +21,7 @@ const TOOLTIP_WIDTH = 300;
 const PADDING = 16;
 
 export default function PageTour({ pageName, steps, translations }: PageTourProps) {
-    const { t } = useLanguage();
+    useLanguage();
     const [isActive, setIsActive] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
