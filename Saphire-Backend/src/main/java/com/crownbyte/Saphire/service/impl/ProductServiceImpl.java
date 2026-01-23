@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface ProductServiceImpl {
 
-    List<ProductResponse> getAll();
+    List<ProductResponse> getAll(String search);
 
     List<ProductResponse> getActive();
 

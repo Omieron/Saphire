@@ -18,7 +18,7 @@ public class QcFormRecordResponse {
     private Long machineId;
     private String machineName;
     private Long productInstanceId;
-    private String productInstanceSerialNumber;
+    private String productInstanceSerial;
     private Long productionStepId;
     private Map<String, Object> headerData;
     private LocalDateTime scheduledFor;

@@ -37,8 +37,8 @@ export interface MachineRequest {
 }
 
 export const machineApi = {
-    getAll: () =>
-        api.get<ApiResponse<Machine[]>>('/machines'),
+    getAll: (search?: string) =>
+        api.get<ApiResponse<Machine[]>>(`/machines${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
     getById: (id: number) =>
         api.get<ApiResponse<Machine>>(`/machines/${id}`),

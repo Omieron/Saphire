@@ -17,4 +17,6 @@ public interface MachineRepository extends JpaRepository<MachineEntity, Long> {
     Optional<MachineEntity> findByLocationIdAndCode(Long locationId, String code);
 
     boolean existsByLocationIdAndCode(Long locationId, String code);
+
+    List<MachineEntity> findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(String name, String code);
 }

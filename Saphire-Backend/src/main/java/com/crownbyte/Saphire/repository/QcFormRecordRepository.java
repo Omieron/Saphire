@@ -3,12 +3,13 @@ package com.crownbyte.Saphire.repository;
 import com.crownbyte.Saphire.entity.qc.QcFormRecordEntity;
 import com.crownbyte.Saphire.entity.qc.enums.RecordStatusEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface QcFormRecordRepository extends JpaRepository<QcFormRecordEntity, Long> {
+public interface QcFormRecordRepository extends JpaRepository<QcFormRecordEntity, Long>, JpaSpecificationExecutor<QcFormRecordEntity> {
     List<QcFormRecordEntity> findByTemplateId(Long templateId);
 
     List<QcFormRecordEntity> findByMachineId(Long machineId);

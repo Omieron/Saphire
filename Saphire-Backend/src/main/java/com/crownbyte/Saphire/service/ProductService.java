@@ -22,9 +22,14 @@ public class ProductService implements ProductServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAll() {
-        return productRepository.findAll()
-                .stream()
+    public List<ProductResponse> getAll(String search) {
+        List<ProductEntity> products;
+        if (search != null && !search.trim().isEmpty()) {
+            products = productRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(search, search);
+        } else {
+            products = productRepository.findAll();
+        }
+        return products.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

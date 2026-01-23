@@ -19,8 +19,8 @@ public class LocationController {
     private final LocationService locationService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<LocationResponse>>> getAll() {
-        List<LocationResponse> locations = locationService.getAll();
+    public ResponseEntity<ApiResponse<List<LocationResponse>>> getAll(@RequestParam(required = false) String search) {
+        List<LocationResponse> locations = locationService.getAll(search);
         return ResponseEntity.ok(ApiResponse.success(locations));
     }
 

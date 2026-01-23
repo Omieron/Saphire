@@ -19,8 +19,8 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CompanyResponse>>> getAll() {
-        List<CompanyResponse> companies = companyService.getAll();
+    public ResponseEntity<ApiResponse<List<CompanyResponse>>> getAll(@RequestParam(required = false) String search) {
+        List<CompanyResponse> companies = companyService.getAll(search);
         return ResponseEntity.ok(ApiResponse.success(companies));
     }
 

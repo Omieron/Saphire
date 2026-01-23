@@ -44,9 +44,14 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TaskAssignmentResponse> getAll() {
-        return taskAssignmentRepository.findAll()
-                .stream()
+    public List<TaskAssignmentResponse> getAll(String search) {
+        List<TaskAssignmentEntity> assignments;
+        if (search != null && !search.trim().isEmpty()) {
+            assignments = taskAssignmentRepository.findBySearch(search);
+        } else {
+            assignments = taskAssignmentRepository.findAll();
+        }
+        return assignments.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

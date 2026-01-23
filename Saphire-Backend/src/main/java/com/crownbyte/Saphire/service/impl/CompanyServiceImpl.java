@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface CompanyServiceImpl {
 
-    List<CompanyResponse> getAll();
+    List<CompanyResponse> getAll(String search);
 
     Optional<CompanyResponse> getById(Long id);
 

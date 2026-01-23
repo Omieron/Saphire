@@ -10,6 +10,10 @@ import com.crownbyte.Saphire.entity.production.ProductInstanceEntity;
 import com.crownbyte.Saphire.entity.production.ProductionStepEntity;
 import com.crownbyte.Saphire.entity.qc.*;
 import com.crownbyte.Saphire.entity.qc.enums.*;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import org.springframework.data.jpa.domain.Specification;
 import com.crownbyte.Saphire.repository.*;
 import com.crownbyte.Saphire.service.impl.QcFormRecordServiceImpl;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,7 +21,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,8 +44,68 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public List<QcFormRecordResponse> getAll() {
-        return recordRepository.findAll()
+    public List<QcFormRecordResponse> getAll(String search, String status, String templateName, String machineName, String userName, LocalDate startDate, LocalDate endDate) {
+        Specification<QcFormRecordEntity> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (search != null && !search.trim().isEmpty()) {
+                String lSearch = "%" + search.toLowerCase() + "%";
+                Join<QcFormRecordEntity, QcFormTemplateEntity> templateJoin = root.join("template", JoinType.LEFT);
+                Join<QcFormRecordEntity, MachineEntity> machineJoin = root.join("machine", JoinType.LEFT);
+                Join<QcFormRecordEntity, ProductInstanceEntity> instanceJoin = root.join("productInstance", JoinType.LEFT);
+                Join<QcFormRecordEntity, UserEntity> userJoin = root.join("filledBy", JoinType.LEFT);
+
+                List<Predicate> searchPredicates = new ArrayList<>();
+                searchPredicates.add(cb.like(cb.lower(templateJoin.get("name")), lSearch));
+                searchPredicates.add(cb.like(cb.lower(templateJoin.get("code")), lSearch));
+                searchPredicates.add(cb.like(cb.lower(machineJoin.get("name")), lSearch));
+                searchPredicates.add(cb.like(cb.lower(instanceJoin.get("serialNumber")), lSearch));
+                searchPredicates.add(cb.like(cb.lower(userJoin.get("fullName")), lSearch));
+
+                // Add ID search safely
+                try {
+                    Long idSearch = Long.parseLong(search.trim());
+                    searchPredicates.add(cb.equal(root.get("id"), idSearch));
+                } catch (NumberFormatException e) {
+                    // Not a number, skip ID equality check
+                }
+
+                predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
+            }
+
+            if (status != null && !status.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), RecordStatusEnum.valueOf(status.toUpperCase())));
+            }
+
+            if (templateName != null && !templateName.trim().isEmpty()) {
+                predicates.add(cb.equal(root.join("template", JoinType.LEFT).get("name"), templateName));
+            }
+
+            if (machineName != null && !machineName.trim().isEmpty()) {
+                Join<QcFormRecordEntity, MachineEntity> machineJoin = root.join("machine", JoinType.LEFT);
+                Join<QcFormRecordEntity, ProductInstanceEntity> instanceJoin = root.join("productInstance", JoinType.LEFT);
+                predicates.add(cb.or(
+                    cb.equal(machineJoin.get("name"), machineName),
+                    cb.equal(instanceJoin.get("serialNumber"), machineName)
+                ));
+            }
+
+            if (userName != null && !userName.trim().isEmpty()) {
+                predicates.add(cb.equal(root.join("filledBy", JoinType.LEFT).get("fullName"), userName));
+            }
+
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("submittedAt"), startDate.atStartOfDay()));
+            }
+
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("submittedAt"), endDate.atTime(LocalTime.MAX)));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return recordRepository.findAll(spec)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -340,7 +406,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
                 .machineId(entity.getMachine() != null ? entity.getMachine().getId() : null)
                 .machineName(entity.getMachine() != null ? entity.getMachine().getName() : null)
                 .productInstanceId(entity.getProductInstance() != null ? entity.getProductInstance().getId() : null)
-                .productInstanceSerialNumber(
+                .productInstanceSerial(
                         entity.getProductInstance() != null ? entity.getProductInstance().getSerialNumber() : null)
                 .productionStepId(entity.getProductionStep() != null ? entity.getProductionStep().getId() : null)
                 .headerData(entity.getHeaderData())

@@ -19,8 +19,8 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll() {
-        List<ProductResponse> products = productService.getAll();
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll(@RequestParam(required = false) String search) {
+        List<ProductResponse> products = productService.getAll(search);
         return ResponseEntity.ok(ApiResponse.success(products));
     }
 

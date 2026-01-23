@@ -19,8 +19,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getAll() {
-        List<UserResponse> users = userService.getAll();
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAll(@RequestParam(required = false) String search) {
+        List<UserResponse> users = userService.getAll(search);
         return ResponseEntity.ok(ApiResponse.success(users));
     }
 

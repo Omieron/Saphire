@@ -11,8 +11,8 @@ export interface UserRequest {
 }
 
 export const userApi = {
-    getAll: () =>
-        api.get<ApiResponse<User[]>>('/users'),
+    getAll: (search?: string) =>
+        api.get<ApiResponse<User[]>>(`/users${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
     getById: (id: number) =>
         api.get<ApiResponse<User>>(`/users/${id}`),

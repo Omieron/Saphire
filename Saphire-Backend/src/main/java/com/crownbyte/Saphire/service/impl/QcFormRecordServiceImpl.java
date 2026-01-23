@@ -2,13 +2,14 @@ package com.crownbyte.Saphire.service.impl;
 
 import com.crownbyte.Saphire.dto.request.QcFormRecordRequest;
 import com.crownbyte.Saphire.dto.response.QcFormRecordResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface QcFormRecordServiceImpl {
 
-    List<QcFormRecordResponse> getAll();
+    List<QcFormRecordResponse> getAll(String search, String status, String templateName, String machineName, String userName, LocalDate startDate, LocalDate endDate);
 
     List<QcFormRecordResponse> getByTemplateId(Long templateId);
 

@@ -17,6 +17,7 @@ export default function Products() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [showForm, setShowForm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [editItem, setEditItem] = useState<Product | null>(null);
@@ -39,13 +40,32 @@ export default function Products() {
         showForm && currentLocation.pathname !== nextLocation.pathname
     );
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
-        try { const response = await productApi.getAll(); setProducts(response.data.data || []); }
-        catch (error) { console.error('Failed to fetch products:', error); }
-        finally { setLoading(false); }
+        setLoading(true);
+        try {
+            const response = await productApi.getAll(debouncedSearch);
+            setProducts(response.data.data || []);
+        }
+        catch (error) {
+            console.error('Failed to fetch products:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, [debouncedSearch]);
 
     const handleAdd = () => { setEditItem(null); setFormData({ name: '', code: '', description: '', active: true }); setShowForm(true); };
 
@@ -96,7 +116,6 @@ export default function Products() {
         finally { setSaving(false); }
     };
 
-    const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || p.code.toLowerCase().includes(search.toLowerCase()));
 
     return (
         <div className="space-y-4">
@@ -128,10 +147,10 @@ export default function Products() {
                             <tbody className="divide-y divide-[var(--color-border)]">
                                 {loading ? (
                                     <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
-                                ) : filtered.length === 0 ? (
+                                ) : products.length === 0 ? (
                                     <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.products.noProducts}</td></tr>
                                 ) : (
-                                    filtered.map((product) => (
+                                    products.map((product) => (
                                         <tr key={product.id} className="hover:bg-[var(--color-surface-hover)]">
                                             <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">#{product.id}</td>
                                             <td className="px-6 py-4 text-sm font-medium text-[var(--color-text)]">{product.name}</td>

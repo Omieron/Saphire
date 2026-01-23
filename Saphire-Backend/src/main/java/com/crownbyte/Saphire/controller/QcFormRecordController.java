@@ -10,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,8 +22,15 @@ public class QcFormRecordController {
     private final QcFormRecordService recordService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<QcFormRecordResponse>>> getAll() {
-        List<QcFormRecordResponse> records = recordService.getAll();
+    public ResponseEntity<ApiResponse<List<QcFormRecordResponse>>> getAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String templateName,
+            @RequestParam(required = false) String machineName,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        List<QcFormRecordResponse> records = recordService.getAll(search, status, templateName, machineName, userName, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.success(records));
     }
 

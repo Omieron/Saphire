@@ -6,7 +6,7 @@ import com.crownbyte.Saphire.dto.response.TaskAssignmentResponse;
 import java.util.List;
 
 public interface TaskAssignmentService {
-    List<TaskAssignmentResponse> getAll();
+    List<TaskAssignmentResponse> getAll(String search);
     TaskAssignmentResponse create(TaskAssignmentRequest request);
     TaskAssignmentResponse update(Long id, TaskAssignmentRequest request);
     void delete(Long id);

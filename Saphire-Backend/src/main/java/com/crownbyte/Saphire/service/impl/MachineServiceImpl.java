@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface MachineServiceImpl {
 
-    List<MachineResponse> getAll();
+    List<MachineResponse> getAll(String search);
 
     List<MachineResponse> getByLocationId(Long locationId);
 

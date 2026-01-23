@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface LocationServiceImpl {
 
-    List<LocationResponse> getAll();
+    List<LocationResponse> getAll(String search);
 
     List<LocationResponse> getByCompanyId(Long companyId);
 

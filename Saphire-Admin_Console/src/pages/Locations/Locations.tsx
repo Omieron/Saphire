@@ -21,6 +21,7 @@ export default function Locations() {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [filterCompany, setFilterCompany] = useState<number | ''>('');
     const [showForm, setShowForm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -43,9 +44,23 @@ export default function Locations() {
         showForm && currentLocation.pathname !== nextLocation.pathname
     );
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
+        setLoading(true);
         try {
-            const [locRes, compRes] = await Promise.all([locationApi.getAll(), companyApi.getAll()]);
+            const [locRes, compRes] = await Promise.all([
+                locationApi.getAll(debouncedSearch),
+                companyApi.getAll()
+            ]);
             setLocations(locRes.data.data || []);
             setCompanies(compRes.data.data || []);
         } catch (error) {
@@ -55,7 +70,9 @@ export default function Locations() {
         }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, [debouncedSearch]);
 
     const handleAdd = () => {
         setEditItem(null);
@@ -115,9 +132,8 @@ export default function Locations() {
     };
 
     const filtered = locations.filter((loc) => {
-        const matchesSearch = loc.name.toLowerCase().includes(search.toLowerCase()) || loc.code.toLowerCase().includes(search.toLowerCase());
         const matchesCompany = filterCompany === '' || loc.companyId === filterCompany;
-        return matchesSearch && matchesCompany;
+        return matchesCompany;
     });
 
     return (

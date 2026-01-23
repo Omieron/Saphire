@@ -22,8 +22,8 @@ export interface LocationRequest {
 }
 
 export const locationApi = {
-    getAll: () =>
-        api.get<ApiResponse<Location[]>>('/locations'),
+    getAll: (search?: string) =>
+        api.get<ApiResponse<Location[]>>(`/locations${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
     getById: (id: number) =>
         api.get<ApiResponse<Location>>(`/locations/${id}`),

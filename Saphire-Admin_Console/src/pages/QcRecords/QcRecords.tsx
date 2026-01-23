@@ -24,6 +24,7 @@ export default function QcRecords() {
     const [records, setRecords] = useState<QcFormRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [filterStatus, setFilterStatus] = useState('');
     const [selectedRecord, setSelectedRecord] = useState<QcFormRecord | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -36,9 +37,9 @@ export default function QcRecords() {
     const [filterEndDate, setFilterEndDate] = useState('');
 
     // Derived unique values for filters
-    const uniqueTemplates = Array.from(new Set(records.map(r => r.templateName))).filter(Boolean).sort();
-    const uniqueMachines = Array.from(new Set(records.map(r => r.machineName || r.productInstanceSerial || ''))).filter(Boolean).sort();
-    const uniqueUsers = Array.from(new Set(records.map(r => r.filledByName))).filter(Boolean).sort();
+    const [uniqueTemplates, setUniqueTemplates] = useState<string[]>([]);
+    const [uniqueMachines, setUniqueMachines] = useState<string[]>([]);
+    const [uniqueUsers, setUniqueUsers] = useState<string[]>([]);
 
     const getStatusLabel = (status: string) => {
         switch (status) {
@@ -51,40 +52,49 @@ export default function QcRecords() {
         }
     };
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
-        try { const response = await qcRecordApi.getAll(); setRecords(response.data.data || []); }
+        setLoading(true);
+        try {
+            const filters = {
+                search: debouncedSearch,
+                status: filterStatus || undefined,
+                templateName: filterTemplate || undefined,
+                machineName: filterMachine || undefined,
+                userName: filterUser || undefined,
+                startDate: filterStartDate || undefined,
+                endDate: filterEndDate || undefined
+            };
+            const response = await qcRecordApi.getAll(filters);
+            const allRecords = response.data.data || [];
+            setRecords(allRecords);
+
+            if (uniqueTemplates.length === 0 && allRecords.length > 0) {
+                setUniqueTemplates(Array.from(new Set(allRecords.map(r => r.templateName))).filter(Boolean).sort());
+                setUniqueMachines(Array.from(new Set(allRecords.map(r => r.machineName || r.productInstanceSerial || ''))).filter(Boolean).sort());
+                setUniqueUsers(Array.from(new Set(allRecords.map(r => r.filledByName))).filter(Boolean).sort() as string[]);
+            }
+        }
         catch (error) { console.error('Failed to fetch:', error); }
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { fetchData(); }, [debouncedSearch, filterStatus, filterTemplate, filterMachine, filterUser, filterStartDate, filterEndDate]);
 
     const openDetailModal = (record: QcFormRecord) => {
         setSelectedRecord(record);
         setShowDetailModal(true);
     };
 
-    const filtered = records.filter((r) => {
-        const searchLower = search.toLowerCase();
-        const matchesSearch = (
-            (r.templateName || '').toLowerCase().includes(searchLower) ||
-            (r.templateCode || '').toLowerCase().includes(searchLower) ||
-            (r.machineName || '').toLowerCase().includes(searchLower) ||
-            (r.productInstanceSerial || '').toLowerCase().includes(searchLower) ||
-            (r.filledByName || '').toLowerCase().includes(searchLower) ||
-            r.id.toString().includes(searchLower)
-        );
-        const matchesStatus = filterStatus === '' || r.status === filterStatus;
-        const matchesTemplate = filterTemplate === '' || r.templateName === filterTemplate;
-        const matchesMachine = filterMachine === '' || (r.machineName || r.productInstanceSerial || '') === filterMachine;
-        const matchesUser = filterUser === '' || r.filledByName === filterUser;
-
-        const recordDate = r.submittedAt ? new Date(r.submittedAt).toISOString().split('T')[0] : '';
-        const matchesStart = !filterStartDate || recordDate >= filterStartDate;
-        const matchesEnd = !filterEndDate || recordDate <= filterEndDate;
-
-        return matchesSearch && matchesStatus && matchesTemplate && matchesMachine && matchesUser && matchesStart && matchesEnd;
-    });
 
     const resetFilters = () => {
         setSearch('');
@@ -234,10 +244,10 @@ export default function QcRecords() {
                     <tbody className="divide-y divide-[var(--color-border)]">
                         {loading ? (
                             <tr><td colSpan={8} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
-                        ) : filtered.length === 0 ? (
+                        ) : records.length === 0 ? (
                             <tr><td colSpan={8} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.qcRecords.noRecords}</td></tr>
                         ) : (
-                            filtered.map((record) => {
+                            records.map((record) => {
                                 const statusStyle = statusColors[record.status] || statusColors.DRAFT;
                                 const StatusIcon = statusStyle.icon;
                                 const resultStyle = record.overallResult ? (resultColors[record.overallResult] || resultColors.PASS) : null;

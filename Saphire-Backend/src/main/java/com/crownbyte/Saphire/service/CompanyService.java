@@ -22,9 +22,14 @@ public class CompanyService implements CompanyServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompanyResponse> getAll() {
-        return companyRepository.findAll()
-                .stream()
+    public List<CompanyResponse> getAll(String search) {
+        List<CompanyEntity> companies;
+        if (search != null && !search.trim().isEmpty()) {
+            companies = companyRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(search, search);
+        } else {
+            companies = companyRepository.findAll();
+        }
+        return companies.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

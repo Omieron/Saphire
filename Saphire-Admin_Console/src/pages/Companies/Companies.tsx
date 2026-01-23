@@ -19,6 +19,7 @@ export default function Companies() {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [showForm, setShowForm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [editItem, setEditItem] = useState<Company | null>(null);
@@ -41,9 +42,20 @@ export default function Companies() {
         showForm && currentLocation.pathname !== nextLocation.pathname
     );
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
+        setLoading(true);
         try {
-            const response = await companyApi.getAll();
+            const response = await companyApi.getAll(debouncedSearch);
             setCompanies(response.data.data || []);
         } catch (error) {
             console.error('Failed to fetch companies:', error);
@@ -54,7 +66,7 @@ export default function Companies() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [debouncedSearch]);
 
     const handleAdd = () => {
         setEditItem(null);
@@ -113,11 +125,6 @@ export default function Companies() {
         }
     };
 
-    const filtered = companies.filter(
-        (c) =>
-            c.name.toLowerCase().includes(search.toLowerCase()) ||
-            c.code.toLowerCase().includes(search.toLowerCase())
-    );
 
     return (
         <div className="space-y-4">
@@ -160,12 +167,12 @@ export default function Companies() {
                                     <tr>
                                         <td colSpan={5} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td>
                                     </tr>
-                                ) : filtered.length === 0 ? (
+                                ) : companies.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.companies.noCompanies}</td>
                                     </tr>
                                 ) : (
-                                    filtered.map((company) => (
+                                    companies.map((company) => (
                                         <tr key={company.id} className="hover:bg-[var(--color-surface-hover)]">
                                             <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">#{company.id}</td>
                                             <td className="px-6 py-4 text-sm font-medium text-[var(--color-text)]">{company.name}</td>

@@ -28,9 +28,14 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public List<QcFormTemplateResponse> getAll() {
-        return templateRepository.findAll()
-                .stream()
+    public List<QcFormTemplateResponse> getAll(String search) {
+        List<QcFormTemplateEntity> templates;
+        if (search != null && !search.trim().isEmpty()) {
+            templates = templateRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(search, search);
+        } else {
+            templates = templateRepository.findAll();
+        }
+        return templates.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

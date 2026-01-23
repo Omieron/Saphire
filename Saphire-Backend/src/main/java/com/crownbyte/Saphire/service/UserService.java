@@ -25,9 +25,14 @@ public class UserService implements UserServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserResponse> getAll() {
-        return userRepository.findAll()
-                .stream()
+    public List<UserResponse> getAll(String search) {
+        List<UserEntity> users;
+        if (search != null && !search.trim().isEmpty()) {
+            users = userRepository.findByUsernameContainingIgnoreCaseOrFullNameContainingIgnoreCase(search, search);
+        } else {
+            users = userRepository.findAll();
+        }
+        return users.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

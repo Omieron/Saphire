@@ -16,6 +16,7 @@ export default function QcApprovalQueue() {
     const [records, setRecords] = useState<QcFormRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [selectedRecord, setSelectedRecord] = useState<QcFormRecord | null>(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
@@ -37,9 +38,9 @@ export default function QcApprovalQueue() {
     const [filterEndDate, setFilterEndDate] = useState('');
 
     // Derived unique values for filters
-    const uniqueTemplates = Array.from(new Set(records.map(r => r.templateName))).filter(Boolean).sort();
-    const uniqueMachines = Array.from(new Set(records.map(r => r.machineName || r.productInstanceSerial || ''))).filter(Boolean).sort();
-    const uniqueUsers = Array.from(new Set(records.map(r => r.filledByName))).filter(Boolean).sort();
+    const [uniqueTemplates, setUniqueTemplates] = useState<string[]>([]);
+    const [uniqueMachines, setUniqueMachines] = useState<string[]>([]);
+    const [uniqueUsers, setUniqueUsers] = useState<string[]>([]);
 
     const getStatusLabel = (status: string) => {
         switch (status) {
@@ -50,13 +51,40 @@ export default function QcApprovalQueue() {
         }
     };
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
+        setLoading(true);
         try {
-            const response = await qcRecordApi.getAll();
-            // Only show SUBMITTED records in the approval queue
-            const allRecords = response.data.data || [];
-            const pending = allRecords.filter(r => r.status === 'SUBMITTED');
+            const filters = {
+                search: debouncedSearch,
+                status: 'SUBMITTED',
+                templateName: filterTemplate || undefined,
+                machineName: filterMachine || undefined,
+                userName: filterUser || undefined,
+                startDate: filterStartDate || undefined,
+                endDate: filterEndDate || undefined
+            };
+            const response = await qcRecordApi.getAll(filters);
+            const pending = response.data.data || [];
             setRecords(pending);
+
+            // Update unique filter values from all SUBMITTED records if they hasn't been set yet
+            // Or ideally we should have separate API for these unique values, but for now we extract from current data
+            // To make filters work better, we might need a separate call to get ALL pending to fill filter options
+            if (uniqueTemplates.length === 0 && pending.length > 0) {
+                setUniqueTemplates(Array.from(new Set(pending.map(r => r.templateName))).filter(Boolean).sort());
+                setUniqueMachines(Array.from(new Set(pending.map(r => r.machineName || r.productInstanceSerial || ''))).filter(Boolean).sort());
+                setUniqueUsers(Array.from(new Set(pending.map(r => r.filledByName))).filter(Boolean).sort() as string[]);
+            }
 
             if (pending.length > 0) {
                 addAlert({
@@ -75,9 +103,8 @@ export default function QcApprovalQueue() {
 
     useEffect(() => {
         fetchData();
-        // Clear the alert when visiting the page
         removeAlert('pending-qc');
-    }, []);
+    }, [debouncedSearch, filterTemplate, filterMachine, filterUser, filterStartDate, filterEndDate]);
 
     const handleApprove = async () => {
         if (!approveId) return;
@@ -163,27 +190,6 @@ export default function QcApprovalQueue() {
         setShowDetailModal(true);
     };
 
-    const filtered = records.filter((r) => {
-        const searchLower = search.toLowerCase();
-        const matchesSearch = (
-            (r.templateName || '').toLowerCase().includes(searchLower) ||
-            (r.templateCode || '').toLowerCase().includes(searchLower) ||
-            (r.machineName || '').toLowerCase().includes(searchLower) ||
-            (r.productInstanceSerial || '').toLowerCase().includes(searchLower) ||
-            (r.filledByName || '').toLowerCase().includes(searchLower) ||
-            r.id.toString().includes(searchLower)
-        );
-
-        const matchesTemplate = filterTemplate === '' || r.templateName === filterTemplate;
-        const matchesMachine = filterMachine === '' || (r.machineName || r.productInstanceSerial || '') === filterMachine;
-        const matchesUser = filterUser === '' || r.filledByName === filterUser;
-
-        const recordDate = r.submittedAt ? new Date(r.submittedAt).toISOString().split('T')[0] : '';
-        const matchesStart = !filterStartDate || recordDate >= filterStartDate;
-        const matchesEnd = !filterEndDate || recordDate <= filterEndDate;
-
-        return matchesSearch && matchesTemplate && matchesMachine && matchesUser && matchesStart && matchesEnd;
-    });
 
     const resetFilters = () => {
         setSearch('');
@@ -308,10 +314,10 @@ export default function QcApprovalQueue() {
                     <tbody className="divide-y divide-[var(--color-border)]">
                         {loading ? (
                             <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
-                        ) : filtered.length === 0 ? (
+                        ) : records.length === 0 ? (
                             <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.qcRecords.noRecords}</td></tr>
                         ) : (
-                            filtered.map((record) => {
+                            records.map((record) => {
                                 return (
                                     <tr key={record.id} className="hover:bg-[var(--color-surface-hover)] transition-colors">
                                         <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">#{record.id}</td>

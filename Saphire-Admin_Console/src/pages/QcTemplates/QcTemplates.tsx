@@ -68,6 +68,7 @@ export default function QcTemplates() {
     const [machines, setMachines] = useState<Machine[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
     // Builder state
@@ -109,10 +110,21 @@ export default function QcTemplates() {
         id: '', label: '', inputType: 'NUMBER', unit: '', targetValue: '', minValue: '', maxValue: '', repeatCount: 1, required: true, options: ''
     });
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
+        setLoading(true);
         try {
             const [templatesRes, productsRes, machinesRes] = await Promise.all([
-                qcTemplateApi.getAll(),
+                qcTemplateApi.getAll(debouncedSearch),
                 productApi.getAll(),
                 machineApi.getAll()
             ]);
@@ -123,7 +135,7 @@ export default function QcTemplates() {
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { fetchData(); }, [debouncedSearch]);
 
     const handleAddTemplate = () => {
         setEditingTemplate(null);
@@ -284,7 +296,6 @@ export default function QcTemplates() {
         } finally { setSaving(false); }
     };
 
-    const filtered = templates.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()) || t.code.toLowerCase().includes(search.toLowerCase()));
 
     // Template List View
     if (!showBuilder) {
@@ -317,10 +328,10 @@ export default function QcTemplates() {
                         <tbody className="divide-y divide-[var(--color-border)]">
                             {loading ? (
                                 <tr><td colSpan={7} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
-                            ) : filtered.length === 0 ? (
+                            ) : templates.length === 0 ? (
                                 <tr><td colSpan={7} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.qcTemplates.noTemplates}</td></tr>
                             ) : (
-                                filtered.map((template) => {
+                                templates.map((template) => {
                                     const fieldCount = template.sections?.reduce((acc, s) => acc + (s.fields?.length || 0), 0) || 0;
                                     return (
                                         <React.Fragment key={template.id}>

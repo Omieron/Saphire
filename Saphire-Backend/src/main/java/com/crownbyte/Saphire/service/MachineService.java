@@ -29,9 +29,14 @@ public class MachineService implements MachineServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MachineResponse> getAll() {
-        return machineRepository.findAll()
-                .stream()
+    public List<MachineResponse> getAll(String search) {
+        List<MachineEntity> machines;
+        if (search != null && !search.trim().isEmpty()) {
+            machines = machineRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(search, search);
+        } else {
+            machines = machineRepository.findAll();
+        }
+        return machines.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

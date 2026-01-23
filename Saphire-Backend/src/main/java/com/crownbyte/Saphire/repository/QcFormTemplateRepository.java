@@ -15,6 +15,8 @@ public interface QcFormTemplateRepository extends JpaRepository<QcFormTemplateEn
 
     List<QcFormTemplateEntity> findByActiveTrue();
 
+    List<QcFormTemplateEntity> findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(String name, String code);
+
     List<QcFormTemplateEntity> findByCompanyId(Long companyId);
 
     List<QcFormTemplateEntity> findByMachineId(Long machineId);

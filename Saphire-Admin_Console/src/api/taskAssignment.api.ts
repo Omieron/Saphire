@@ -36,8 +36,8 @@ export interface TaskAssignmentRequest {
 }
 
 export const taskAssignmentApi = {
-    getAll: () =>
-        api.get<ApiResponse<TaskAssignment[]>>('/task-assignments'),
+    getAll: (search?: string) =>
+        api.get<ApiResponse<TaskAssignment[]>>(`/task-assignments${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
     create: (data: TaskAssignmentRequest) =>
         api.post<ApiResponse<TaskAssignment>>('/task-assignments', data),

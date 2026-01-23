@@ -25,9 +25,14 @@ public class LocationService implements LocationServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LocationResponse> getAll() {
-        return locationRepository.findAll()
-                .stream()
+    public List<LocationResponse> getAll(String search) {
+        List<LocationEntity> locations;
+        if (search != null && !search.trim().isEmpty()) {
+            locations = locationRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(search, search);
+        } else {
+            locations = locationRepository.findAll();
+        }
+        return locations.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

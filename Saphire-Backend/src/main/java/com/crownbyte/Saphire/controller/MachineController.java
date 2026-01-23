@@ -19,8 +19,8 @@ public class MachineController {
     private final MachineService machineService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<MachineResponse>>> getAll() {
-        List<MachineResponse> machines = machineService.getAll();
+    public ResponseEntity<ApiResponse<List<MachineResponse>>> getAll(@RequestParam(required = false) String search) {
+        List<MachineResponse> machines = machineService.getAll(search);
         return ResponseEntity.ok(ApiResponse.success(machines));
     }
 

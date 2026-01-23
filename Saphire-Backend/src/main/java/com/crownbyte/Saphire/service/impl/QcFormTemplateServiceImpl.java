@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface QcFormTemplateServiceImpl {
 
-    List<QcFormTemplateResponse> getAll();
+    List<QcFormTemplateResponse> getAll(String search);
 
     List<QcFormTemplateResponse> getActive();
 

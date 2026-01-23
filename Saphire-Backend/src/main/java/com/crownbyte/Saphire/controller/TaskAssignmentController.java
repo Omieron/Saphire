@@ -18,8 +18,8 @@ public class TaskAssignmentController {
     private final TaskAssignmentService taskAssignmentService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TaskAssignmentResponse>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.success(taskAssignmentService.getAll()));
+    public ResponseEntity<ApiResponse<List<TaskAssignmentResponse>>> getAll(@RequestParam(required = false) String search) {
+        return ResponseEntity.ok(ApiResponse.success(taskAssignmentService.getAll(search)));
     }
 
     @PostMapping

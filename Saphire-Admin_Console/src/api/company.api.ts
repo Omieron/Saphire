@@ -17,8 +17,8 @@ export interface CompanyRequest {
 }
 
 export const companyApi = {
-    getAll: () =>
-        api.get<ApiResponse<Company[]>>('/companies'),
+    getAll: (search?: string) =>
+        api.get<ApiResponse<Company[]>>(`/companies${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
     getById: (id: number) =>
         api.get<ApiResponse<Company>>(`/companies/${id}`),

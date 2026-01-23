@@ -13,4 +13,10 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignmentEn
     
     @Query("SELECT ta FROM TaskAssignmentEntity ta JOIN ta.assignedUsers u WHERE u.id = :userId AND ta.active = true")
     List<TaskAssignmentEntity> findActiveAssignmentsByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT ta FROM TaskAssignmentEntity ta " +
+           "LEFT JOIN ta.template t " +
+           "LEFT JOIN ta.assignedUsers u " +
+           "WHERE (:search IS NULL OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')))")
+    List<TaskAssignmentEntity> findBySearch(@Param("search") String search);
 }

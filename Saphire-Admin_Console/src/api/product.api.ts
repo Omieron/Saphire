@@ -19,8 +19,8 @@ export interface ProductRequest {
 }
 
 export const productApi = {
-    getAll: () =>
-        api.get<ApiResponse<Product[]>>('/products'),
+    getAll: (search?: string) =>
+        api.get<ApiResponse<Product[]>>(`/products${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
     getById: (id: number) =>
         api.get<ApiResponse<Product>>(`/products/${id}`),

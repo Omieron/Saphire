@@ -96,8 +96,8 @@ export interface QcFormTemplateRequest {
 }
 
 export const qcTemplateApi = {
-    getAll: () =>
-        api.get<ApiResponse<QcFormTemplate[]>>('/qc-templates'),
+    getAll: (search?: string) =>
+        api.get<ApiResponse<QcFormTemplate[]>>(`/qc-templates${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
     getById: (id: number) =>
         api.get<ApiResponse<QcFormTemplate>>(`/qc-templates/${id}`),

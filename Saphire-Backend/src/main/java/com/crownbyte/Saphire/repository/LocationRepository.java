@@ -15,4 +15,6 @@ public interface LocationRepository extends JpaRepository<LocationEntity, Long> 
     Optional<LocationEntity> findByCompanyIdAndCode(Long companyId, String code);
 
     boolean existsByCompanyIdAndCode(Long companyId, String code);
+
+    List<LocationEntity> findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(String name, String code);
 }

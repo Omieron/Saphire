@@ -20,6 +20,7 @@ export default function Tasks() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [showForm, setShowForm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [editItem, setEditItem] = useState<TaskAssignment | null>(null);
@@ -50,10 +51,21 @@ export default function Tasks() {
     const [deleteTarget, setDeleteTarget] = useState<TaskAssignment | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
+        setLoading(true);
         try {
             const [assignmentsRes, usersRes, templatesRes, machinesRes, productsRes] = await Promise.all([
-                taskAssignmentApi.getAll(),
+                taskAssignmentApi.getAll(debouncedSearch),
                 userApi.getAll(),
                 qcTemplateApi.getAll(),
                 machineApi.getAll(),
@@ -73,7 +85,7 @@ export default function Tasks() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [debouncedSearch]);
 
     const handleAdd = () => {
         setEditItem(null);
@@ -209,16 +221,6 @@ export default function Tasks() {
         return acc;
     }, {} as Record<string, QcFormTemplate[]>);
 
-    const filtered = assignments.filter(a => {
-        const searchLower = search.toLowerCase();
-        const machineName = a.machineId ? machines.find(m => m.id == a.machineId)?.name || '' : '';
-        const productName = a.productId ? products.find(p => p.id == a.productId)?.name || '' : '';
-
-        return a.templateName.toLowerCase().includes(searchLower) ||
-            a.templateCode.toLowerCase().includes(searchLower) ||
-            machineName.toLowerCase().includes(searchLower) ||
-            productName.toLowerCase().includes(searchLower);
-    });
 
     const selectedTemplate = templates.find(t => t.id === formData.templateId);
     const selectedMachine = machines.find(m => m.id === formData.machineId);
@@ -255,10 +257,10 @@ export default function Tasks() {
                             <tbody className="divide-y divide-[var(--color-border)]">
                                 {loading ? (
                                     <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.common.loading}</td></tr>
-                                ) : filtered.length === 0 ? (
+                                ) : assignments.length === 0 ? (
                                     <tr><td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">{t.tasks.noTasks}</td></tr>
                                 ) : (
-                                    filtered.map((item) => (
+                                    assignments.map((item) => (
                                         <React.Fragment key={item.id}>
                                             <tr className="hover:bg-[var(--color-surface-hover)] transition-colors cursor-pointer" onClick={() => setExpandedRow(expandedRow === item.id ? null : item.id)}>
                                                 <td className="px-6 py-4">

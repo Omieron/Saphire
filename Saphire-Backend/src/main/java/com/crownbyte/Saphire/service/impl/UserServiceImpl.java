@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface UserServiceImpl {
 
-    List<UserResponse> getAll();
+    List<UserResponse> getAll(String search);
 
     List<UserResponse> getActive();
 

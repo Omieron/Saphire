@@ -29,6 +29,7 @@ export default function Machines() {
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [filterLocation, setFilterLocation] = useState<number | ''>('');
     const [showForm, setShowForm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -52,16 +53,35 @@ export default function Machines() {
         showForm && currentLocation.pathname !== nextLocation.pathname
     );
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
+        setLoading(true);
         try {
-            const [machRes, locRes] = await Promise.all([machineApi.getAll(), locationApi.getAll()]);
+            const [machRes, locRes] = await Promise.all([
+                machineApi.getAll(debouncedSearch),
+                locationApi.getAll()
+            ]);
             setMachines(machRes.data.data || []);
             setLocations(locRes.data.data || []);
-        } catch (error) { console.error('Failed to fetch:', error); }
-        finally { setLoading(false); }
+        } catch (error) {
+            console.error('Failed to fetch:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, [debouncedSearch]);
 
     const handleAdd = () => {
         setEditItem(null);
@@ -126,9 +146,8 @@ export default function Machines() {
     };
 
     const filtered = machines.filter((m) => {
-        const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.code.toLowerCase().includes(search.toLowerCase());
         const matchesLocation = filterLocation === '' || m.locationId === filterLocation;
-        return matchesSearch && matchesLocation;
+        return matchesLocation;
     });
 
     return (

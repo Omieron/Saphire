@@ -25,6 +25,7 @@ export default function Users() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [filterRole, setFilterRole] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -48,17 +49,33 @@ export default function Users() {
         showForm && currentLocation.pathname !== nextLocation.pathname
     );
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search]);
+
     const fetchData = async () => {
-        try { const response = await userApi.getAll(); setUsers(response.data.data || []); }
-        catch (error: any) {
+        setLoading(true);
+        try {
+            const response = await userApi.getAll(debouncedSearch);
+            setUsers(response.data.data || []);
+        } catch (error: any) {
             console.error('Failed to fetch users:', error);
             const errMsg = error.response?.data?.message || error.message;
             setToast({ show: true, message: `Hata: ${errMsg}`, type: 'error' });
+        } finally {
+            setLoading(false);
         }
-        finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, [debouncedSearch]);
 
     const handleAdd = () => { setEditItem(null); setFormData({ username: '', password: '', email: '', fullName: '', role: 'OPERATOR', active: true }); setShowForm(true); };
 
@@ -123,9 +140,8 @@ export default function Users() {
     };
 
     const filtered = users.filter((u) => {
-        const matchesSearch = u.username.toLowerCase().includes(search.toLowerCase()) || u.fullName.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
         const matchesRole = filterRole === '' || u.role === filterRole;
-        return matchesSearch && matchesRole;
+        return matchesRole;
     });
 
     return (

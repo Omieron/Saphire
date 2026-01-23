@@ -20,4 +20,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     List<UserEntity> findByRole(UserRoleEnum role);
 
     List<UserEntity> findByActiveTrue();
+
+    List<UserEntity> findByUsernameContainingIgnoreCaseOrFullNameContainingIgnoreCase(String username, String fullName);
 }

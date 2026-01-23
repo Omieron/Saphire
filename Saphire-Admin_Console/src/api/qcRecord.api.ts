@@ -54,8 +54,27 @@ export interface QcFormRecordRequest {
 }
 
 export const qcRecordApi = {
-    getAll: () =>
-        api.get<ApiResponse<QcFormRecord[]>>('/qc-records'),
+    getAll: (filters?: {
+        search?: string;
+        status?: string;
+        templateName?: string;
+        machineName?: string;
+        userName?: string;
+        startDate?: string;
+        endDate?: string;
+    }) => {
+        const params = new URLSearchParams();
+        if (filters?.search) params.append('search', filters.search);
+        if (filters?.status) params.append('status', filters.status);
+        if (filters?.templateName) params.append('templateName', filters.templateName);
+        if (filters?.machineName) params.append('machineName', filters.machineName);
+        if (filters?.userName) params.append('userName', filters.userName);
+        if (filters?.startDate) params.append('startDate', filters.startDate);
+        if (filters?.endDate) params.append('endDate', filters.endDate);
+
+        const queryString = params.toString();
+        return api.get<ApiResponse<QcFormRecord[]>>(`/qc-records${queryString ? `?${queryString}` : ''}`);
+    },
 
     getById: (id: number) =>
         api.get<ApiResponse<QcFormRecord>>(`/qc-records/${id}`),

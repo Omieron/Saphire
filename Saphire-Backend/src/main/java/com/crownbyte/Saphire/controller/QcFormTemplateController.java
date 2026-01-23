@@ -19,8 +19,8 @@ public class QcFormTemplateController {
     private final QcFormTemplateService templateService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<QcFormTemplateResponse>>> getAll() {
-        List<QcFormTemplateResponse> templates = templateService.getAll();
+    public ResponseEntity<ApiResponse<List<QcFormTemplateResponse>>> getAll(@RequestParam(required = false) String search) {
+        List<QcFormTemplateResponse> templates = templateService.getAll(search);
         return ResponseEntity.ok(ApiResponse.success(templates));
     }
 
