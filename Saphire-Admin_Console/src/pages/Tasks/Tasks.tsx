@@ -395,7 +395,7 @@ export default function Tasks() {
                     <Toast isOpen={toast.show} onClose={() => setToast({ ...toast, show: false })} message={toast.message} type={toast.type} duration={3000} />
                 </>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-8 items-start">
                     {/* Left: Planning Form */}
                     <div className="lg:col-span-7 space-y-8 pb-12">
                         <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 p-6 rounded-2xl border border-teal-500/20">
@@ -585,7 +585,7 @@ export default function Tasks() {
                     </div>
 
                     {/* Right: Premium Job Ticket Preview */}
-                    <div className="lg:col-span-5 h-full sticky top-8">
+                    <div className="lg:col-span-5 sticky top-24">
                         <div className="relative group">
                             {/* Decorative Glow */}
                             <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 rounded-[40px] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />

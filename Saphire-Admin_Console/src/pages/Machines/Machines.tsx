@@ -357,7 +357,7 @@ export default function Machines() {
                     </div>
 
                     {/* Right: Premium Machine Dashboard Preview */}
-                    <div className="lg:col-span-5 h-full flex flex-col justify-center">
+                    <div className="lg:col-span-5 sticky top-24">
                         <div className="relative group">
                             {/* Decorative Background Elements */}
                             <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 rounded-[32px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

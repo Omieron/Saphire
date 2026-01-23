@@ -399,7 +399,7 @@ export default function QcTemplates() {
 
     // Template Builder View
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-8 items-start mb-12 pb-8">
             {/* Left: Component Builder */}
             <div className="lg:col-span-7 space-y-8 pb-12">
                 <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 p-6 rounded-2xl border border-teal-500/20">
@@ -535,7 +535,7 @@ export default function QcTemplates() {
             </div>
 
             {/* Right: Live Operator Preview (Mobile Mockup) */}
-            <div className="lg:col-span-5 sticky top-8">
+            <div className="lg:col-span-5 sticky top-24 pt-24">
                 <div className="relative group mx-auto max-w-[340px]">
                     {/* Phone Frame */}
                     <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 rounded-[60px] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
