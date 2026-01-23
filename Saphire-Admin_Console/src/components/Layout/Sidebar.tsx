@@ -62,7 +62,7 @@ export default function Sidebar() {
             {/* Logo */}
             <div className="h-16 flex items-center justify-between px-3 border-b border-white/10">
                 {!collapsed && (
-                    <span className="text-lg font-bold bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent truncate">
+                    <span className="text-2xl font-bold bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent truncate">
                         Saphire
                     </span>
                 )}
@@ -85,7 +85,7 @@ export default function Sidebar() {
                                 className="px-4 py-2 mt-3 first:mt-0"
                                 data-tour={item.tourId}
                             >
-                                <span className="text-[10px] font-semibold text-white/60 uppercase tracking-wider">
+                                <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">
                                     {item.label}
                                 </span>
                             </div>
@@ -103,7 +103,7 @@ export default function Sidebar() {
                             <div key={item.label} className="relative">
                                 <button
                                     onClick={() => !collapsed && toggleMenu(item.label!)}
-                                    className={`flex items-center gap-3 px-3 py-2.5 mx-auto rounded-xl transition-all duration-300 text-sm group relative ${collapsed
+                                    className={`flex items-center gap-3 px-3 py-2.5 mx-auto rounded-xl transition-all duration-300 text-[15px] group relative ${collapsed
                                         ? 'justify-center w-12 h-12 mb-2 p-0'
                                         : 'w-[calc(100%-24px)] mb-1 hover:bg-white/5 text-slate-300 hover:text-white'
                                         }`}
@@ -111,7 +111,7 @@ export default function Sidebar() {
                                 >
                                     <div className={`flex items-center justify-center transition-all duration-300 ${collapsed ? 'group-hover:scale-110' : ''}`}>
                                         <Icon
-                                            size={collapsed ? 20 : 18}
+                                            size={collapsed ? 22 : 20}
                                             className="flex-shrink-0 transition-all duration-300 drop-shadow-sm"
                                         />
                                     </div>
@@ -129,7 +129,7 @@ export default function Sidebar() {
                                                 key={sub.path}
                                                 to={sub.path}
                                                 className={({ isActive }) =>
-                                                    `flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-xs ${isActive
+                                                    `flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm ${isActive
                                                         ? 'bg-teal-500/15 text-teal-400 font-semibold shadow-[0_0_15px_rgba(20,184,166,0.1)]'
                                                         : 'hover:bg-white/5 text-slate-400 hover:text-white'
                                                     }`
@@ -139,7 +139,7 @@ export default function Sidebar() {
                                                     <>
                                                         {sub.icon ? (
                                                             <sub.icon
-                                                                size={14}
+                                                                size={16}
                                                                 className={`transition-colors duration-300 ${isActive ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`}
                                                             />
                                                         ) : (
@@ -162,7 +162,7 @@ export default function Sidebar() {
                             to={item.path!}
                             title={collapsed ? item.label : undefined}
                             className={({ isActive }) =>
-                                `flex items-center gap-3 px-3 py-2.5 mx-auto rounded-xl transition-all duration-300 text-sm group relative ${isActive
+                                `flex items-center gap-3 px-3 py-2.5 mx-auto rounded-xl transition-all duration-300 text-[15px] group relative ${isActive
                                     ? 'active bg-teal-500/15 text-teal-400 font-semibold shadow-[0_0_20px_rgba(20,184,166,0.1)]'
                                     : 'hover:bg-white/5 text-slate-300 hover:text-white'
                                 } ${collapsed
@@ -179,7 +179,7 @@ export default function Sidebar() {
 
                             <div className={`flex items-center justify-center transition-all duration-300 ${collapsed ? 'group-hover:scale-110' : ''}`}>
                                 <Icon
-                                    size={collapsed ? 20 : 18}
+                                    size={collapsed ? 22 : 20}
                                     className="flex-shrink-0 transition-all duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
                                 />
                             </div>
