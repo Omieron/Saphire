@@ -1,9 +1,11 @@
 package com.crownbyte.Saphire.repository;
 
 import com.crownbyte.Saphire.entity.qc.QcFormRecordEntity;
+import com.crownbyte.Saphire.entity.qc.enums.OverallResultEnum;
 import com.crownbyte.Saphire.entity.qc.enums.RecordStatusEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,4 +25,14 @@ public interface QcFormRecordRepository extends JpaRepository<QcFormRecordEntity
     List<QcFormRecordEntity> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     List<QcFormRecordEntity> findByMachineIdAndCreatedAtBetween(Long machineId, LocalDateTime start, LocalDateTime end);
+
+    long countByOverallResult(OverallResultEnum result);
+
+    long countByOverallResultAndCreatedAtBetween(OverallResultEnum result, LocalDateTime start, LocalDateTime end);
+
+    List<QcFormRecordEntity> findTop10ByOrderByCreatedAtDesc();
+
+    @Query("SELECT q.productInstance.product.name, COUNT(q), SUM(CASE WHEN q.overallResult = 'PASS' THEN 1 ELSE 0 END) " +
+           "FROM QcFormRecordEntity q GROUP BY q.productInstance.product.name")
+    List<Object[]> getProductPerformanceStats();
 }
