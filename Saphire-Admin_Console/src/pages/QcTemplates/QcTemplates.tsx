@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBlocker } from 'react-router-dom';
-import { Plus, Trash2, Search, CheckCircle, XCircle, FileText, ChevronDown, ChevronRight, GripVertical, Settings, Smartphone, ClipboardCheck, Info, Package, Cpu, Camera, Edit3, Hash, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, Search, CheckCircle, XCircle, FileText, ChevronDown, ChevronRight, GripVertical, Settings, Tablet, ClipboardCheck, Info, Package, Cpu, Camera, Edit3, Hash, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
 import { qcTemplateApi, type QcFormTemplate, type QcFormTemplateRequest, type QcFormSectionRequest, type QcFormFieldRequest } from '../../api/qcTemplate.api';
 import { productApi, type Product } from '../../api/product.api';
 import { machineApi, type Machine } from '../../api/machine.api';
@@ -85,6 +85,7 @@ export default function QcTemplates() {
     const [saving, setSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [mockupOrientation, setMockupOrientation] = useState<'landscape' | 'portrait'>('landscape');
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<QcFormTemplate | null>(null);
@@ -399,9 +400,9 @@ export default function QcTemplates() {
 
     // Template Builder View
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-8 items-start mb-12 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-11 gap-8 p-8 items-start mb-12 pb-8">
             {/* Left: Component Builder */}
-            <div className="lg:col-span-7 space-y-8 pb-12">
+            <div className="lg:col-span-5 space-y-8 pb-12">
                 <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 p-6 rounded-2xl border border-teal-500/20">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 text-white">
@@ -534,109 +535,128 @@ export default function QcTemplates() {
                 </div>
             </div>
 
-            {/* Right: Live Operator Preview (Mobile Mockup) */}
-            <div className="lg:col-span-5 sticky top-24 pt-24">
-                <div className="relative group mx-auto max-w-[340px]">
-                    {/* Phone Frame */}
-                    <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 rounded-[60px] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            {/* Right: Live Operator Preview (Tablet Landscape Mockup) */}
+            <div className="lg:col-span-6 sticky top-24 pt-4">
+                <div className={`relative group mx-auto transition-all duration-500 ${mockupOrientation === 'landscape' ? 'max-w-[580px] w-full' : 'max-w-[340px] w-full'}`}>
+                    {/* Tablet Frame */}
+                    <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 rounded-[48px] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
 
-                    <div className="relative bg-[#0f172a] rounded-[52px] p-4 shadow-2xl border-[10px] border-[#1e293b] overflow-hidden min-h-[640px] flex flex-col">
-                        {/* Notch */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1e293b] rounded-b-2xl z-20 flex items-center justify-center">
-                            <div className="w-10 h-1 bg-white/10 rounded-full" />
-                        </div>
+                    <div className={`relative bg-[#0f172a] rounded-[32px] p-2.5 shadow-2xl border-[10px] border-[#1e293b] overflow-hidden transition-all duration-500 flex flex-col ${mockupOrientation === 'landscape' ? 'aspect-[16/10]' : 'aspect-[10/16]'}`}>
+                        {/* Camera Hole */}
+                        <div className={`absolute bg-white/10 rounded-full z-20 transition-all duration-500 ${mockupOrientation === 'landscape' ? 'left-2.5 top-1/2 -translate-y-1/2 w-1 h-1' : 'top-2.5 left-1/2 -translate-x-1/2 w-1 h-1'}`} />
 
                         {/* App Content */}
-                        <div className="flex-1 bg-slate-50 rounded-[38px] overflow-hidden flex flex-col relative">
-                            {/* App Bar */}
-                            <div className="bg-white border-b border-slate-200 px-6 pt-8 pb-4 flex flex-col gap-1">
+                        <div className="flex-1 bg-slate-50 rounded-[22px] overflow-hidden flex flex-col relative">
+                            {/* App Bar (Saphire Mobile Style) */}
+                            <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-5 py-3.5 flex flex-col gap-1 shadow-md relative z-10">
                                 <div className="flex items-center justify-between">
-                                    <Smartphone size={14} className="text-slate-400" />
-                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-teal-500 text-white rounded-full text-[8px] font-black uppercase tracking-widest">
-                                        OPERATOR MODE
+                                    <div className="flex items-center gap-2">
+                                        <Tablet size={14} className="text-white/80" />
+                                        <h5 className="text-sm font-black text-white truncate max-w-[200px]">{templateName || 'QC Form Preview'}</h5>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white rounded text-[8px] font-black uppercase tracking-widest border border-white/10">
+                                            {mockupOrientation.toUpperCase()}
+                                        </div>
                                     </div>
                                 </div>
-                                <h5 className="text-lg font-black text-slate-800 truncate">{templateName || 'QC Form Preview'}</h5>
-                                <div className="flex items-center gap-1 text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                                    <ClipboardCheck size={10} className="text-teal-500" />
-                                    {contextType === 'PRODUCT'
-                                        ? (products.find(p => p.id === selectedProductId)?.name || 'NO PRODUCT SELECTED')
-                                        : contextType === 'MACHINE'
-                                            ? (machines.find(m => m.id === selectedMachineId)?.name || 'NO MACHINE SELECTED')
-                                            : 'GENERAL PROCESS CONTEXT'
-                                    }
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-black/10 rounded-full text-[7px] font-black text-white/90 uppercase tracking-widest">
+                                        <ClipboardCheck size={8} className="text-white" />
+                                        <span className="truncate max-w-[150px]">
+                                            {contextType === 'PRODUCT'
+                                                ? (products.find(p => p.id === selectedProductId)?.name || 'NO PRODUCT')
+                                                : contextType === 'MACHINE'
+                                                    ? (machines.find(m => m.id === selectedMachineId)?.name || 'NO MACHINE')
+                                                    : 'GENERAL'
+                                            }
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Scrollable Form Area */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                                 {controlPoints.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                                        <div className="w-16 h-16 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-300 mb-4 animate-bounce">
-                                            <Plus size={32} />
+                                    <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 mb-2 animate-bounce">
+                                            <Plus size={24} />
                                         </div>
-                                        <p className="text-xs font-black text-slate-400 uppercase leading-relaxed">Add control points to visualize the mobile operator experience</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase leading-relaxed tracking-wider">Add points to preview</p>
                                     </div>
                                 ) : (
-                                    controlPoints.map((cp, i) => (
-                                        <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-xs font-black text-slate-800 uppercase tracking-tight flex items-center gap-1.5">
-                                                    {cp.required && <span className="text-red-500">*</span>} {cp.label}
-                                                </label>
-                                                {cp.unit && <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">{cp.unit}</span>}
+                                    <div className={`grid gap-3 transition-all duration-500 ${mockupOrientation === 'landscape' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                                        {controlPoints.map((cp, i) => (
+                                            <div key={i} className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 space-y-2 hover:border-teal-500/20 transition-all group/point">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[9px] font-black text-slate-800 uppercase tracking-tight flex items-center gap-1">
+                                                        {cp.required && <span className="text-red-500">*</span>} {cp.label}
+                                                    </label>
+                                                    {cp.unit && <span className="bg-blue-50 text-blue-600 px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-widest">{cp.unit}</span>}
+                                                </div>
+
+                                                {/* Specialized Mockup Inputs */}
+                                                {cp.inputType === 'PASS_FAIL' ? (
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        <div className="py-1.5 border-2 border-teal-500 rounded-lg flex items-center justify-center text-teal-600 bg-teal-50 font-black text-[9px] shadow-sm">PASS</div>
+                                                        <div className="py-1.5 border-2 border-slate-50 rounded-lg flex items-center justify-center text-slate-400 font-black text-[9px]">FAIL</div>
+                                                    </div>
+                                                ) : cp.inputType === 'PHOTO' ? (
+                                                    <div className="h-14 bg-slate-50 rounded-lg border border-dashed border-slate-200 flex flex-col items-center justify-center gap-0.5 group-hover/point:bg-slate-100 transition-colors">
+                                                        <Camera size={14} className="text-slate-400" />
+                                                        <span className="text-[7px] font-black text-slate-400 uppercase">CAPTURE</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg">
+                                                        <div className="w-full h-0.5 bg-slate-200 rounded-full animate-pulse" />
+                                                    </div>
+                                                )}
                                             </div>
-
-                                            {/* Specialized Mockup Inputs */}
-                                            {cp.inputType === 'PASS_FAIL' ? (
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <div className="py-2.5 border-2 border-teal-500 rounded-xl flex items-center justify-center text-teal-600 bg-teal-50 font-black text-[10px]">PASS</div>
-                                                    <div className="py-2.5 border-2 border-slate-100 rounded-xl flex items-center justify-center text-slate-400 font-black text-[10px]">FAIL</div>
-                                                </div>
-                                            ) : cp.inputType === 'PHOTO' ? (
-                                                <div className="h-24 bg-slate-100 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-1">
-                                                    <Camera size={20} className="text-slate-400" />
-                                                    <span className="text-[8px] font-black text-slate-400 uppercase">TAP TO CAPTURE</span>
-                                                </div>
-                                            ) : cp.inputType === 'SELECT' ? (
-                                                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                                                    <span className="text-[10px] text-slate-400 font-bold">Select option...</span>
-                                                    <ChevronDown size={14} className="text-slate-300" />
-                                                </div>
-                                            ) : (
-                                                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                                                    <div className="w-full h-1 bg-slate-200 rounded-full animate-pulse" />
-                                                </div>
-                                            )}
-
-                                            {/* Tolerance Info */}
-                                            {(cp.minValue || cp.maxValue) && (
-                                                <div className="pt-2 border-t border-slate-50 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
-                                                    <span>Tolerance Range</span>
-                                                    <span className="text-teal-600">{cp.minValue || '-'} ~ {cp.maxValue || '-'}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
+                                        ))}
+                                    </div>
                                 )}
                             </div>
 
                             {/* Submit Button Preview */}
-                            <div className="p-4 bg-white border-t border-slate-200">
-                                <button className="w-full py-3 bg-[#0f172a] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
-                                    SUBMIT INSPECTION <ArrowRight size={14} />
+                            <div className="p-3 bg-white border-t border-slate-100 flex justify-end">
+                                <button className="px-6 py-2.5 bg-[#0f172a] text-white rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-md active:scale-95">
+                                    SUBMIT <ArrowRight size={12} />
                                 </button>
                             </div>
 
                             {/* Features Badge */}
-                            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 pointer-events-none space-y-1">
+                            <div className={`absolute pointer-events-none transition-all duration-500 ${mockupOrientation === 'landscape' ? 'bottom-16 right-4' : 'bottom-16 right-3'}`}>
                                 {requiresApproval && (
-                                    <div className="bg-white px-3 py-1 rounded-full shadow-lg border border-teal-100 flex items-center gap-1.5 text-teal-600 animate-in fade-in zoom-in">
-                                        <ShieldCheck size={10} /> <span className="text-[8px] font-black uppercase tracking-widest">APPROVAL ENFORCED</span>
+                                    <div className="bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow-lg border border-teal-100 flex items-center gap-1.5 text-teal-600 animate-in fade-in slide-in-from-right-2">
+                                        <ShieldCheck size={10} /> <span className="text-[7px] font-black uppercase tracking-widest">APPROVAL</span>
                                     </div>
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    {/* Orientation Toggles - Segmented Control Style */}
+                    <div className="mt-8 flex items-center bg-[var(--color-bg)] p-1 rounded-xl border border-[var(--color-border)] relative z-30 shadow-sm w-fit mx-auto">
+                        <button
+                            onClick={() => setMockupOrientation('landscape')}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${mockupOrientation === 'landscape'
+                                ? 'bg-teal-500 text-white shadow-md'
+                                : 'text-[var(--color-text-secondary)] hover:text-teal-500'
+                                }`}
+                        >
+                            <Tablet size={14} className={mockupOrientation === 'landscape' ? 'rotate-90' : ''} />
+                            Landscape
+                        </button>
+                        <button
+                            onClick={() => setMockupOrientation('portrait')}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${mockupOrientation === 'portrait'
+                                ? 'bg-teal-500 text-white shadow-md'
+                                : 'text-[var(--color-text-secondary)] hover:text-teal-500'
+                                }`}
+                        >
+                            <Tablet size={14} />
+                            Portrait
+                        </button>
                     </div>
                 </div>
             </div>
