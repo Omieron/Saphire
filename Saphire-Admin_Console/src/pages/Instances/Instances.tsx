@@ -9,6 +9,8 @@ import type { ProductRoute } from '../../api/route.api';
 import { locationApi } from '../../api/location.api';
 import type { Location } from '../../api/location.api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import Toast from '../../components/Toast/Toast';
 
 const statusColors: Record<string, { bg: string; text: string }> = {
     CREATED: { bg: 'bg-slate-500/10', text: 'text-slate-500' },
@@ -30,8 +32,21 @@ export default function Instances() {
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [formData, setFormData] = useState<ProductInstanceRequest>({ productId: 0, routeId: 0, locationId: 0, serialNumber: '', priority: 0 });
     const [saving, setSaving] = useState(false);
+
+    // Delete confirmation state
+    const [deleteTarget, setDeleteTarget] = useState<ProductInstance | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Toast state
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+        show: false,
+        message: '',
+        type: 'success',
+    });
 
     const fetchData = async () => {
         try {
@@ -53,17 +68,45 @@ export default function Instances() {
         setShowModal(true);
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm(t.common.confirm)) return;
-        try { await instanceApi.delete(id); fetchData(); } catch (error) { console.error('Failed to delete:', error); }
+    const handleDeleteClick = (item: ProductInstance) => {
+        setDeleteTarget(item);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            await instanceApi.delete(deleteTarget.id);
+            setDeleteTarget(null);
+            setToast({ show: true, message: t.common.recordDeleted, type: 'success' });
+            fetchData();
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            setToast({ show: true, message: 'Silme işlemi başarısız oldu!', type: 'error' });
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setShowSaveConfirm(true);
+    };
+
+    const processSubmit = async () => {
+        setShowSaveConfirm(false);
         setSaving(true);
-        try { await instanceApi.create(formData); setShowModal(false); fetchData(); }
-        catch (error) { console.error('Failed to save:', error); }
-        finally { setSaving(false); }
+        try {
+            await instanceApi.create(formData);
+            setShowModal(false);
+            setToast({ show: true, message: t.common.success, type: 'success' });
+            fetchData();
+        } catch (error) {
+            console.error('Failed to save:', error);
+            setToast({ show: true, message: t.common.error, type: 'error' });
+        } finally {
+            setSaving(false);
+        }
     };
 
     const filtered = instances.filter((inst) => {
@@ -137,7 +180,7 @@ export default function Instances() {
                                         </td>
                                         <td className="px-6 py-4"><span className={`inline-flex items-center px-2 py-1 ${statusStyle.bg} ${statusStyle.text} rounded-full text-xs font-medium`}>{inst.status}</span></td>
                                         <td className="px-6 py-4 text-right">
-                                            <button onClick={() => handleDelete(inst.id)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                                            <button onClick={() => handleDeleteClick(inst)} className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 );
@@ -191,13 +234,60 @@ export default function Instances() {
                                 </select>
                             </div>
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors">{t.common.cancel}</button>
+                                <button type="button" onClick={() => setShowCancelConfirm(true)} className="flex-1 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors">{t.common.cancel}</button>
                                 <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50">{saving ? t.common.loading : t.common.save}</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
+            {/* Save Confirmation */}
+            <ConfirmModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={processSubmit}
+                title={t.common.saveConfirmTitle}
+                message={t.common.saveConfirmMessage}
+                variant="primary"
+                simple={true}
+                confirmLabel={t.common.save}
+                cancelLabel={t.common.cancel}
+            />
+
+            {/* Cancel Confirmation */}
+            <ConfirmModal
+                isOpen={showCancelConfirm}
+                onClose={() => setShowCancelConfirm(false)}
+                onConfirm={() => {
+                    setShowCancelConfirm(false);
+                    setShowModal(false);
+                }}
+                title={t.common.cancelConfirm}
+                message={t.common.cancelMessage}
+                simple={true}
+                variant="danger"
+                confirmLabel={t.common.giveUp}
+                cancelLabel={t.common.back}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDeleteConfirm}
+                title={t.common.deleteConfirm}
+                message={t.common.deleteMessage}
+                loading={deleting}
+            />
+
+            {/* Success/Error Toast */}
+            <Toast
+                isOpen={toast.show}
+                onClose={() => setToast({ ...toast, show: false })}
+                message={toast.message}
+                type={toast.type}
+                duration={3000}
+            />
         </div>
     );
 }

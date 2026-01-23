@@ -34,6 +34,7 @@ export default function Machines() {
     const [editItem, setEditItem] = useState<Machine | null>(null);
     const [formData, setFormData] = useState<MachineRequest>({ locationId: 0, code: '', name: '', type: '', active: true, maintenanceMode: false });
     const [saving, setSaving] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<Machine | null>(null);
@@ -59,7 +60,7 @@ export default function Machines() {
 
     const handleAdd = () => {
         setEditItem(null);
-        setFormData({ locationId: locations[0]?.id || 0, code: '', name: '', type: '', active: true, maintenanceMode: false });
+        setFormData({ locationId: 0, code: '', name: '', type: '', active: true, maintenanceMode: false });
         setShowForm(true);
     };
 
@@ -94,15 +95,28 @@ export default function Machines() {
         catch (error) { console.error('Failed to toggle maintenance:', error); }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (formData.locationId === 0) {
+            setToast({ show: true, message: t.common.selectLocation, type: 'error' });
+            return;
+        }
+        setShowSaveConfirm(true);
+    };
+
+    const processSubmit = async () => {
+        setShowSaveConfirm(false);
         setSaving(true);
         try {
             if (editItem) { await machineApi.update(editItem.id, formData); }
             else { await machineApi.create(formData); }
             setShowForm(false);
+            setToast({ show: true, message: t.common.success, type: 'success' });
             fetchData();
-        } catch (error) { console.error('Failed to save:', error); }
+        } catch (error) {
+            console.error('Failed to save:', error);
+            setToast({ show: true, message: t.common.error, type: 'error' });
+        }
         finally { setSaving(false); }
     };
 
@@ -227,7 +241,7 @@ export default function Machines() {
                                             className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 appearance-none font-medium transition-all group-hover:border-teal-500/50"
                                             required
                                         >
-                                            <option value="">{t.common.selectLocation}</option>
+                                            <option value={0} disabled>{t.common.selectLocation}</option>
                                             {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                                         </select>
                                     </div>
@@ -405,6 +419,19 @@ export default function Machines() {
                     </div>
                 </div>
             )}
+
+            {/* Save Confirmation */}
+            <ConfirmModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={processSubmit}
+                title={t.common.saveConfirmTitle}
+                message={t.common.saveConfirmMessage}
+                variant="primary"
+                simple={true}
+                confirmLabel={t.common.save}
+                cancelLabel={t.common.cancel}
+            />
 
             {/* Cancel Confirmation */}
             <ConfirmModal

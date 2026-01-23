@@ -23,6 +23,7 @@ export default function Tasks() {
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [editItem, setEditItem] = useState<TaskAssignment | null>(null);
     const [saving, setSaving] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
     const [formData, setFormData] = useState({
@@ -121,7 +122,7 @@ export default function Tasks() {
         });
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.userIds.length === 0) {
             setToast({ show: true, message: 'Lütfen en az bir kullanıcı seçin!', type: 'error' });
@@ -153,6 +154,11 @@ export default function Tasks() {
             return;
         }
 
+        setShowSaveConfirm(true);
+    };
+
+    const processSubmit = async () => {
+        setShowSaveConfirm(false);
         setSaving(true);
         try {
             if (editItem) {
@@ -751,6 +757,20 @@ export default function Tasks() {
                 </div>
             )}
 
+            {/* Save Confirmation */}
+            <ConfirmModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={processSubmit}
+                title={t.common.saveConfirmTitle}
+                message={t.common.saveConfirmMessage}
+                variant="primary"
+                simple={true}
+                confirmLabel={t.common.save}
+                cancelLabel={t.common.cancel}
+            />
+
+            {/* Cancel Confirmation */}
             <ConfirmModal
                 isOpen={showCancelConfirm}
                 onClose={() => setShowCancelConfirm(false)}
@@ -761,6 +781,16 @@ export default function Tasks() {
                 variant="danger"
                 confirmLabel={t.common.giveUp}
                 cancelLabel={t.common.back}
+            />
+
+            {/* Delete Confirmation */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDeleteConfirm}
+                title={t.common.deleteConfirm}
+                message={t.common.deleteMessage}
+                loading={deleting}
             />
 
             <Toast

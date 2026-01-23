@@ -26,6 +26,7 @@ export default function Locations() {
     const [editItem, setEditItem] = useState<Location | null>(null);
     const [formData, setFormData] = useState<LocationRequest>({ companyId: 0, name: '', code: '', address: '', active: true });
     const [saving, setSaving] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<Location | null>(null);
@@ -54,7 +55,7 @@ export default function Locations() {
 
     const handleAdd = () => {
         setEditItem(null);
-        setFormData({ companyId: companies[0]?.id || 0, name: '', code: '', address: '', active: true });
+        setFormData({ companyId: 0, name: '', code: '', address: '', active: true });
         setShowForm(true);
     };
 
@@ -84,15 +85,28 @@ export default function Locations() {
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (formData.companyId === 0) {
+            setToast({ show: true, message: t.common.selectCompany, type: 'error' });
+            return;
+        }
+        setShowSaveConfirm(true);
+    };
+
+    const processSubmit = async () => {
+        setShowSaveConfirm(false);
         setSaving(true);
         try {
             if (editItem) { await locationApi.update(editItem.id, formData); }
             else { await locationApi.create(formData); }
             setShowForm(false);
+            setToast({ show: true, message: t.common.success, type: 'success' });
             fetchData();
-        } catch (error) { console.error('Failed to save:', error); }
+        } catch (error) {
+            console.error('Failed to save:', error);
+            setToast({ show: true, message: t.common.error, type: 'error' });
+        }
         finally { setSaving(false); }
     };
 
@@ -204,7 +218,7 @@ export default function Locations() {
                                             className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 appearance-none font-medium transition-all group-hover:border-teal-500/50"
                                             required
                                         >
-                                            <option value="">{t.common.selectCompany}</option>
+                                            <option value={0} disabled>{t.common.selectCompany}</option>
                                             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                     </div>
@@ -352,6 +366,19 @@ export default function Locations() {
                     </div>
                 </div>
             )}
+
+            {/* Save Confirmation */}
+            <ConfirmModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={processSubmit}
+                title={t.common.saveConfirmTitle}
+                message={t.common.saveConfirmMessage}
+                variant="primary"
+                simple={true}
+                confirmLabel={t.common.save}
+                cancelLabel={t.common.cancel}
+            />
 
             {/* Cancel Confirmation */}
             <ConfirmModal

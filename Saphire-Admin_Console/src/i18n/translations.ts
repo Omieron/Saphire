@@ -36,6 +36,8 @@ export const translations = {
             deleteMessage: 'This action cannot be undone. All related data will be permanently deleted.',
             cancelConfirm: 'Cancel Confirmation',
             cancelMessage: 'Are you sure you want to cancel? Any unsaved changes will be lost.',
+            saveConfirmTitle: 'Save Confirmation',
+            saveConfirmMessage: 'Are you sure you want to save these changes?',
             recordDeleted: 'Record deleted successfully',
             // Placeholders
             select: 'Select...',
@@ -437,6 +439,8 @@ export const translations = {
             deleteMessage: 'Bu işlem geri alınamaz. Tüm ilişkili veriler kalıcı olarak silinecektir.',
             cancelConfirm: 'İptal Onayı',
             cancelMessage: 'İptal etmek istediğinize emin misiniz? Kaydedilmeyen tüm değişiklikler kaybolacaktır.',
+            saveConfirmTitle: 'Kaydetme Onayı',
+            saveConfirmMessage: 'Bu değişiklikleri kaydetmek istediğinize emin misiniz?',
             recordDeleted: 'Kayıt başarıyla silindi',
             // Placeholders
             select: 'Seçiniz...',

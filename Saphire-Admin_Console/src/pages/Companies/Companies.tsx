@@ -23,6 +23,7 @@ export default function Companies() {
     const [editItem, setEditItem] = useState<Company | null>(null);
     const [formData, setFormData] = useState<CompanyRequest>({ name: '', code: '', active: true });
     const [saving, setSaving] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
@@ -82,8 +83,13 @@ export default function Companies() {
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setShowSaveConfirm(true);
+    };
+
+    const processSubmit = async () => {
+        setShowSaveConfirm(false);
         setSaving(true);
         try {
             if (editItem) {
@@ -92,9 +98,11 @@ export default function Companies() {
                 await companyApi.create(formData);
             }
             setShowForm(false);
+            setToast({ show: true, message: t.common.success, type: 'success' });
             fetchData();
         } catch (error) {
             console.error('Failed to save:', error);
+            setToast({ show: true, message: t.common.error, type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -338,6 +346,19 @@ export default function Companies() {
                     </div>
                 </div>
             )}
+
+            {/* Save Confirmation */}
+            <ConfirmModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={processSubmit}
+                title={t.common.saveConfirmTitle}
+                message={t.common.saveConfirmMessage}
+                variant="primary"
+                simple={true}
+                confirmLabel={t.common.save}
+                cancelLabel={t.common.cancel}
+            />
 
             {/* Cancel Confirmation */}
             <ConfirmModal

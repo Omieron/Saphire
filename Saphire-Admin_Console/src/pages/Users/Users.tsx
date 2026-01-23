@@ -30,6 +30,7 @@ export default function Users() {
     const [editItem, setEditItem] = useState<User | null>(null);
     const [formData, setFormData] = useState<UserRequest>({ username: '', password: '', email: '', fullName: '', role: 'OPERATOR', active: true });
     const [saving, setSaving] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -82,15 +83,21 @@ export default function Users() {
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setShowSaveConfirm(true);
+    };
+
+    const processSubmit = async () => {
+        setShowSaveConfirm(false);
         setSaving(true);
         try {
-            const dataToSend = { ...formData };
+            const dataToSend: any = { ...formData };
             if (editItem && !dataToSend.password) { delete dataToSend.password; }
             if (editItem) { await userApi.update(editItem.id, dataToSend); }
             else { await userApi.create(dataToSend); }
             setShowForm(false);
+            setToast({ show: true, message: t.common.success, type: 'success' });
             fetchData();
         } catch (error: any) {
             console.error('Failed to save:', error);
@@ -391,6 +398,19 @@ export default function Users() {
                     </div>
                 </div>
             )}
+
+            {/* Save Confirmation */}
+            <ConfirmModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={processSubmit}
+                title={t.common.saveConfirmTitle}
+                message={t.common.saveConfirmMessage}
+                variant="primary"
+                simple={true}
+                confirmLabel={t.common.save}
+                cancelLabel={t.common.cancel}
+            />
 
             {/* Cancel Confirmation */}
             <ConfirmModal

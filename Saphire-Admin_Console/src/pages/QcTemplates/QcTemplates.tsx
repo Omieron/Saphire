@@ -82,6 +82,7 @@ export default function QcTemplates() {
     const [allowPartialSave, setAllowPartialSave] = useState(true);
     const [controlPoints, setControlPoints] = useState<ControlPoint[]>([]);
     const [saving, setSaving] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
     // Delete confirmation state
@@ -203,7 +204,7 @@ export default function QcTemplates() {
 
     const handleRemoveField = (id: string) => { setControlPoints(prev => prev.filter(cp => cp.id !== id)); };
 
-    const handleSaveTemplate = async () => {
+    const handleSaveTemplate = () => {
         if (!templateCode.trim() || !templateName.trim()) {
             setToast({ show: true, message: 'Lütfen kod ve isim alanlarını doldurunuz!', type: 'error' });
             return;
@@ -213,6 +214,11 @@ export default function QcTemplates() {
             return;
         }
 
+        setShowSaveConfirm(true);
+    };
+
+    const processSaveTemplate = async () => {
+        setShowSaveConfirm(false);
         setSaving(true);
         try {
             const fields: QcFormFieldRequest[] = controlPoints.map((cp, index) => ({
@@ -264,10 +270,11 @@ export default function QcTemplates() {
             else { await qcTemplateApi.create(request); }
 
             setShowBuilder(false);
+            setToast({ show: true, message: t.common.success, type: 'success' });
             fetchData();
         } catch (error: any) {
             console.error('Failed to save:', error);
-            setToast({ show: true, message: `Hata: Kaydetme başarısız!`, type: 'error' });
+            setToast({ show: true, message: t.common.error, type: 'error' });
         } finally { setSaving(false); }
     };
 
@@ -731,6 +738,18 @@ export default function QcTemplates() {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={processSaveTemplate}
+                title={t.common.saveConfirmTitle}
+                message={t.common.saveConfirmMessage}
+                variant="primary"
+                simple={true}
+                confirmLabel={t.common.save}
+                cancelLabel={t.common.cancel}
+            />
 
             <ConfirmModal isOpen={showCancelConfirm} onClose={() => setShowCancelConfirm(false)} onConfirm={() => { setShowCancelConfirm(false); setShowBuilder(false); }}
                 title={t.common.cancelConfirm} message={t.common.cancelMessage} simple={true} variant="danger" confirmLabel={t.common.giveUp} cancelLabel={t.common.back} />
