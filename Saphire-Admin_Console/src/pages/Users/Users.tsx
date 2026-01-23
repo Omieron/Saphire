@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Shield, Eye, User as UserIcon, Mail, Key } from 'lucide-react';
 import { userApi } from '../../api/user.api';
 import type { UserRequest } from '../../api/user.api';
@@ -42,6 +43,10 @@ export default function Users() {
         message: '',
         type: 'success',
     });
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+        showForm && currentLocation.pathname !== nextLocation.pathname
+    );
 
     const fetchData = async () => {
         try { const response = await userApi.getAll(); setUsers(response.data.data || []); }
@@ -412,13 +417,17 @@ export default function Users() {
                 cancelLabel={t.common.cancel}
             />
 
-            {/* Cancel Confirmation */}
+            {/* Cancel/Navigation Confirmation */}
             <ConfirmModal
-                isOpen={showCancelConfirm}
-                onClose={() => setShowCancelConfirm(false)}
+                isOpen={showCancelConfirm || blocker.state === 'blocked'}
+                onClose={() => {
+                    setShowCancelConfirm(false);
+                    if (blocker.state === 'blocked') blocker.reset();
+                }}
                 onConfirm={() => {
                     setShowCancelConfirm(false);
                     setShowForm(false);
+                    if (blocker.state === 'blocked') blocker.proceed();
                 }}
                 title={t.common.cancelConfirm}
                 message={t.common.cancelMessage}

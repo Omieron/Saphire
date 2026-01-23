@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Package, Barcode, ClipboardList, Hash } from 'lucide-react';
 import { productApi } from '../../api/product.api';
 import type { Product, ProductRequest } from '../../api/product.api';
@@ -33,6 +34,10 @@ export default function Products() {
         message: '',
         type: 'success',
     });
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+        showForm && currentLocation.pathname !== nextLocation.pathname
+    );
 
     const fetchData = async () => {
         try { const response = await productApi.getAll(); setProducts(response.data.data || []); }
@@ -323,13 +328,17 @@ export default function Products() {
                 cancelLabel={t.common.cancel}
             />
 
-            {/* Cancel Confirmation */}
+            {/* Cancel/Navigation Confirmation */}
             <ConfirmModal
-                isOpen={showCancelConfirm}
-                onClose={() => setShowCancelConfirm(false)}
+                isOpen={showCancelConfirm || blocker.state === 'blocked'}
+                onClose={() => {
+                    setShowCancelConfirm(false);
+                    if (blocker.state === 'blocked') blocker.reset();
+                }}
                 onConfirm={() => {
                     setShowCancelConfirm(false);
                     setShowForm(false);
+                    if (blocker.state === 'blocked') blocker.proceed();
                 }}
                 title={t.common.cancelConfirm}
                 message={t.common.cancelMessage}

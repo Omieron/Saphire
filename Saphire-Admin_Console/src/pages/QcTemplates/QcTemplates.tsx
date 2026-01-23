@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { Plus, Trash2, Search, CheckCircle, XCircle, FileText, ChevronDown, ChevronRight, GripVertical, Settings, Smartphone, ClipboardCheck, Info, Package, Cpu, Camera, Edit3, Hash, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
 import { qcTemplateApi, type QcFormTemplate, type QcFormTemplateRequest, type QcFormSectionRequest, type QcFormFieldRequest } from '../../api/qcTemplate.api';
 import { productApi, type Product } from '../../api/product.api';
@@ -95,6 +96,10 @@ export default function QcTemplates() {
         message: '',
         type: 'success',
     });
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+        showBuilder && currentLocation.pathname !== nextLocation.pathname
+    );
 
     // Field modal state
     const [showFieldModal, setShowFieldModal] = useState(false);
@@ -751,8 +756,25 @@ export default function QcTemplates() {
                 cancelLabel={t.common.cancel}
             />
 
-            <ConfirmModal isOpen={showCancelConfirm} onClose={() => setShowCancelConfirm(false)} onConfirm={() => { setShowCancelConfirm(false); setShowBuilder(false); }}
-                title={t.common.cancelConfirm} message={t.common.cancelMessage} simple={true} variant="danger" confirmLabel={t.common.giveUp} cancelLabel={t.common.back} />
+            {/* Cancel/Navigation Confirmation */}
+            <ConfirmModal
+                isOpen={showCancelConfirm || blocker.state === 'blocked'}
+                onClose={() => {
+                    setShowCancelConfirm(false);
+                    if (blocker.state === 'blocked') blocker.reset();
+                }}
+                onConfirm={() => {
+                    setShowCancelConfirm(false);
+                    setShowBuilder(false);
+                    if (blocker.state === 'blocked') blocker.proceed();
+                }}
+                title={t.common.cancelConfirm}
+                message={t.common.cancelMessage}
+                simple={true}
+                variant="danger"
+                confirmLabel={t.common.giveUp}
+                cancelLabel={t.common.back}
+            />
 
             <Toast isOpen={toast.show} onClose={() => setToast({ ...toast, show: false })} message={toast.message} type={toast.type} duration={3000} />
         </div>

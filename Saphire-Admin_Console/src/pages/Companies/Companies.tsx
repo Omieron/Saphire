@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Building2, Hash, ShieldCheck, Activity } from 'lucide-react';
 import { companyApi } from '../../api/company.api';
 import type { Company, CompanyRequest } from '../../api/company.api';
@@ -35,6 +36,10 @@ export default function Companies() {
         message: '',
         type: 'success',
     });
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+        showForm && currentLocation.pathname !== nextLocation.pathname
+    );
 
     const fetchData = async () => {
         try {
@@ -360,13 +365,17 @@ export default function Companies() {
                 cancelLabel={t.common.cancel}
             />
 
-            {/* Cancel Confirmation */}
+            {/* Cancel/Navigation Confirmation */}
             <ConfirmModal
-                isOpen={showCancelConfirm}
-                onClose={() => setShowCancelConfirm(false)}
+                isOpen={showCancelConfirm || blocker.state === 'blocked'}
+                onClose={() => {
+                    setShowCancelConfirm(false);
+                    if (blocker.state === 'blocked') blocker.reset();
+                }}
                 onConfirm={() => {
                     setShowCancelConfirm(false);
                     setShowForm(false);
+                    if (blocker.state === 'blocked') blocker.proceed();
                 }}
                 title={t.common.cancelConfirm}
                 message={t.common.cancelMessage}

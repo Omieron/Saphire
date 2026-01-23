@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
@@ -23,7 +23,7 @@ import Tasks from './pages/Tasks/Tasks';
 import OnboardingTour from './components/Onboarding/OnboardingTour';
 
 // Protected Route wrapper
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -34,10 +34,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-function AppRoutes() {
+function GlobalUIWrapper() {
   const { sessionExpired, clearSessionExpired, logout, connectionError, clearConnectionError } = useAuth();
   const { t } = useLanguage();
 
@@ -49,32 +49,7 @@ function AppRoutes() {
   return (
     <>
       <PageLoader />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-              <OnboardingTour />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="companies" element={<Companies />} />
-          <Route path="locations" element={<Locations />} />
-          <Route path="machines" element={<Machines />} />
-          <Route path="products" element={<Products />} />
-          <Route path="users" element={<Users />} />
-
-          <Route path="qc-templates" element={<QcTemplates />} />
-          <Route path="qc-approval" element={<QcApprovalQueue />} />
-          <Route path="qc-records" element={<QcRecords />} />
-          <Route path="tasks" element={<Tasks />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-      </Routes>
-
+      <Outlet />
       <StatusModal
         isOpen={sessionExpired}
         onClose={handleSessionConfirm}
@@ -82,7 +57,6 @@ function AppRoutes() {
         message={t.auth.sessionExpiredMessage}
         type="warning"
       />
-
       <StatusModal
         isOpen={connectionError}
         onClose={clearConnectionError}
@@ -94,6 +68,42 @@ function AppRoutes() {
   );
 }
 
+const router = createBrowserRouter([
+  {
+    element: <GlobalUIWrapper />,
+    children: [
+      { path: '/login', element: <Login /> },
+      {
+        path: '/',
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: (
+              <>
+                <Layout />
+                <OnboardingTour />
+              </>
+            ),
+            children: [
+              { index: true, element: <Dashboard /> },
+              { path: 'companies', element: <Companies /> },
+              { path: 'locations', element: <Locations /> },
+              { path: 'machines', element: <Machines /> },
+              { path: 'products', element: <Products /> },
+              { path: 'users', element: <Users /> },
+              { path: 'qc-templates', element: <QcTemplates /> },
+              { path: 'qc-approval', element: <QcApprovalQueue /> },
+              { path: 'qc-records', element: <QcRecords /> },
+              { path: 'tasks', element: <Tasks /> },
+              { path: 'settings', element: <Settings /> },
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]);
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -102,9 +112,7 @@ export default function App() {
           <NotificationProvider>
             <OnboardingProvider>
               <SidebarProvider>
-                <BrowserRouter>
-                  <AppRoutes />
-                </BrowserRouter>
+                <RouterProvider router={router} />
               </SidebarProvider>
             </OnboardingProvider>
           </NotificationProvider>

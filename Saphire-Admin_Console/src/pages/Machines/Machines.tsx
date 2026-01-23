@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle, MapPin, Wrench, Activity, Cpu, Hash } from 'lucide-react';
 import { machineApi } from '../../api/machine.api';
 import type { Machine, MachineRequest } from '../../api/machine.api';
@@ -46,6 +47,10 @@ export default function Machines() {
         message: '',
         type: 'success',
     });
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+        showForm && currentLocation.pathname !== nextLocation.pathname
+    );
 
     const fetchData = async () => {
         try {
@@ -433,13 +438,17 @@ export default function Machines() {
                 cancelLabel={t.common.cancel}
             />
 
-            {/* Cancel Confirmation */}
+            {/* Cancel/Navigation Confirmation */}
             <ConfirmModal
-                isOpen={showCancelConfirm}
-                onClose={() => setShowCancelConfirm(false)}
+                isOpen={showCancelConfirm || blocker.state === 'blocked'}
+                onClose={() => {
+                    setShowCancelConfirm(false);
+                    if (blocker.state === 'blocked') blocker.reset();
+                }}
                 onConfirm={() => {
                     setShowCancelConfirm(false);
                     setShowForm(false);
+                    if (blocker.state === 'blocked') blocker.proceed();
                 }}
                 title={t.common.cancelConfirm}
                 message={t.common.cancelMessage}

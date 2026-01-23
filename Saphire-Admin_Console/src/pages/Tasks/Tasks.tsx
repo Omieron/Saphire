@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Search, Clock, CheckCircle, XCircle, User, Cpu, Package, Calendar, Hash, ArrowRight, ShieldCheck, ShieldAlert, ChevronDown, ChevronRight, Settings, ClipboardCheck, FileText } from 'lucide-react';
 import { taskAssignmentApi, type TaskAssignment, type TaskAssignmentType, type TaskSchedule } from '../../api/taskAssignment.api';
 import { userApi } from '../../api/user.api';
@@ -41,6 +42,10 @@ export default function Tasks() {
         message: '',
         type: 'success',
     });
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+        showForm && currentLocation.pathname !== nextLocation.pathname
+    );
 
     const [deleteTarget, setDeleteTarget] = useState<TaskAssignment | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -770,11 +775,18 @@ export default function Tasks() {
                 cancelLabel={t.common.cancel}
             />
 
-            {/* Cancel Confirmation */}
+            {/* Cancel/Navigation Confirmation */}
             <ConfirmModal
-                isOpen={showCancelConfirm}
-                onClose={() => setShowCancelConfirm(false)}
-                onConfirm={() => { setShowCancelConfirm(false); setShowForm(false); }}
+                isOpen={showCancelConfirm || blocker.state === 'blocked'}
+                onClose={() => {
+                    setShowCancelConfirm(false);
+                    if (blocker.state === 'blocked') blocker.reset();
+                }}
+                onConfirm={() => {
+                    setShowCancelConfirm(false);
+                    setShowForm(false);
+                    if (blocker.state === 'blocked') blocker.proceed();
+                }}
                 title={t.common.cancelConfirm}
                 message={t.common.cancelMessage}
                 simple={true}
