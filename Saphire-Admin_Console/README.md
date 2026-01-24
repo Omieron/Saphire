@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# Saphire Admin Panel Kullanım Kılavuzu
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Saphire Admin Paneli, üretim ve kalite kontrol süreçlerini uçtan uca yönetmenizi sağlayan kapsamlı bir yönetim arayüzüdür. Bu kılavuz, bir yöneticinin sistem üzerinde gerçekleştirebileceği tüm temel işlemleri ve modülleri açıklamaktadır.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Genel Bakış
+Saphire, veriye dayalı yönetim anlayışıyla; şirket, makine, ürün ve kullanıcı yönetimini tek bir merkezde toplar. Kalite kontrol süreçlerinizi dijitalleştirir ve gerçek zamanlı raporlama imkanı sunar.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📊 1. Panel (Dashboard)
+Sisteme giriş yaptığınızda sizi karşılayan ana ekrandır.
+- **Canlı İstatistikler:** Aktif görevler, toplam makine sayısı, ürün performansı ve kalite kontrol başarı oranlarını anlık olarak takip edin.
+- **Kritik Uyarılar:** Sistemdeki olası aksaklıkları ve kritik hataları anında görüntüleyin.
+- **Hızlı İşlemler:** Sıklıkla kullanılan "Şirket Ekle", "Şablon Oluştur" gibi işlemlere tek tıkla ulaşın.
+- **Sistem Durumu:** API sunucusu ve veritabanı bağlantı durumunu kontrol edin.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🏗️ 2. Ana Veri Yönetimi (Master Data)
+Sistemin temel yapı taşlarını bu bölümden yönetebilirsiniz:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **🏢 Şirketler:** Sisteme bağlı ana ve alt şirketleri tanımlayın ve düzenleyin.
+- **📍 Lokasyonlar:** Fabrika, depo veya ofis gibi fiziksel alanları sisteme kaydedin.
+- **⚙️ Makineler:** Üretim hattındaki makineleri özelliklerine göre tanımlayın, bakım moduna alın veya aktif/pasif durumlarını yönetin.
+- **📦 Ürünler:** Kalite kontrolü yapılacak tüm ürünleri sistem portföyüne ekleyin.
+- **👥 Kullanıcılar:** Yönetici (Admin), Süpervizör ve Operatör rollerinde kullanıcılar oluşturun. Şifre sıfırlama ve yetki yönetimi işlemlerini gerçekleştirin.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## ✅ 3. Kalite Kontrol (Quality Control)
+Saphire'in kalbi olan modüldür. Süreçlerinizi dijital formlara dönüştürür.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- **📜 Şablonlar (Templates):**
+    - **Esnek Form Tasarımı:** Sürükle-bırak mantığına yakın bir builder ile sayısal, metinsel, evet/hayır veya fotoğraf çekimi gerektiren kontrol noktaları tanımlayın.
+    - **Bağlam Tipi:** Şablonları makineye, ürüne veya genel sürece özel olarak atayın.
+    - **Onay Mekanizması:** Formların onay gerektirip gerektirmediğini belirleyin.
+    - **Canlı Önizleme:** Tasarladığınız formun operatörün tabletinde nasıl görüneceğini anlık olarak izleyin.
+- **📂 Kayıtlar (Records):**
+    - **Geçmiş İzleme:** Operatörler tarafından doldurulan tüm kalite kontrol formlarını filtreleyerek inceleyin.
+    - **Detaylı Analiz:** Her bir ölçüm noktasını, verilen cevapları ve varsa yüklenen fotoğrafları görüntüleyin.
+    - **PDF Dışa Aktar:** Tekil kayıtları veya toplu listeleri profesyonel PDF raporları olarak indirin.
+- **⚖️ Onay Kuyruğu:** Süpervizör onayına düşen formları inceleyip onaylayın veya red nedeni belirterek operatöre geri gönderin.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📅 4. Görev Yönetimi (Task Assignment)
+İşlerin planlanması ve takibi için kullanılır.
+- **Görev Atama:** Belirli kullanıcılara, belirli tarih ve saatlerde doldurmaları için kalite kontrol görevleri atayın.
+- **Zamanlama:** Tek seferlik veya haftalık tekrarlı (Pazartesi, Çarşamba vb.) görev planları oluşturun.
+- **Görev Takibi:** Görevlerin tamamlanma durumunu ve gecikmeleri izleyin.
+
+---
+
+## 🔄 5. Üretim ve Rotalar
+Üretim akışını ve ürün yol haritalarını belirleyin.
+- **Rotalar:** Bir ürünün hangi aşamalardan (hazırlık, işleme, kontrol vb.) geçeceğini ve standart sürelerini tanımlayın.
+- **Üretim Takibi (Instances):** Belirli bir seri numarası ile üretilen her bir parçanın rotadaki konumunu ve durumunu takip edin.
+
+---
+
+## 🛠️ 6. Sistem ve Ayarlar
+- **🌍 Dil Desteği:** Uygulamayı Türkçe veya İngilizce dillerinde kullanın.
+- **🌗 Görünüm:** Koyu (Dark Mode) veya Aydınlık (Light Mode) tema seçenekleri arasından tercihinizi yapın.
+- **📜 Sistem Günlükleri (Logs):** Yazılımsal hataları ve sistem olaylarını takip ederek teknik sorunlara hızlı müdahale edin.
+
+---
+
+## 💡 İpuçları
+- **Arama ve Filtreleme:** Tüm listelerde gelişmiş arama çubuklarını kullanarak binlerce kayıt arasından aradığınızı anında bulun.
+- **Pasife Alma:** Saphire'de veriler silinmez, "Pasif"e çekilir. Böylece geçmiş raporlarınız asla bozulmaz.
+- **Mobil Uyumluluk:** Panelin tasarımı tablet ve mobil cihazlarla tam uyumlu çalışır, sahada kullanım kolaylığı sağlar.

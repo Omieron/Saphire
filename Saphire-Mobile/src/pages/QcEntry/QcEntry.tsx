@@ -89,6 +89,8 @@ export default function QcEntry() {
     const { templateId } = useParams();
     const [searchParams] = useSearchParams();
     const machineId = searchParams.get('machineId');
+    const productId = searchParams.get('productId');
+    const taskId = searchParams.get('taskId');
     const navigate = useNavigate();
     const { t } = useLanguage();
 
@@ -294,6 +296,8 @@ export default function QcEntry() {
             const request = {
                 templateId: parseInt(templateId!),
                 machineId: machineId ? parseInt(machineId) : null,
+                productId: productId ? parseInt(productId) : null,
+                taskAssignmentId: taskId ? parseInt(taskId) : null,
                 headerData: {
                     submittedAt: new Date().toISOString(),
                     totalFields: progress.total,

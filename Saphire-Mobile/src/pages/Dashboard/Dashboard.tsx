@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { machineApi, templateApi } from '../../api';
-import { Cog, Play, LogOut, Globe, History, X, ClipboardCheck, ArrowRight, Moon, Sun } from 'lucide-react';
+import { machineApi, templateApi, taskAssignmentApi } from '../../api';
+import { Cog, Play, LogOut, Globe, History, X, ClipboardCheck, ArrowRight, Moon, Sun, LayoutList, Calendar } from 'lucide-react';
 
 interface Machine {
     id: number;
@@ -19,6 +19,16 @@ interface Template {
     machineId: number;
 }
 
+interface Task {
+    id: number;
+    templateId: number;
+    templateName: string;
+    machineId: number | null;
+    machineName?: string | null;
+    productId: number | null;
+    productName?: string | null;
+}
+
 export default function Dashboard() {
     const { t, language, setLanguage } = useLanguage();
     const { isDark, setTheme } = useTheme();
@@ -27,6 +37,7 @@ export default function Dashboard() {
 
     const [machines, setMachines] = useState<Machine[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
     const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -43,6 +54,12 @@ export default function Dashboard() {
             ]);
             setMachines(machinesRes.data.data || []);
             setTemplates(templatesRes.data.data || []);
+
+            // Fetch tasks if user is logged in
+            if (user?.id) {
+                const tasksRes = await taskAssignmentApi.getActiveTasks(user.id);
+                setTasks(tasksRes.data.data || []);
+            }
         } catch (error) {
             console.error('Failed to fetch data:', error);
         } finally {
@@ -59,6 +76,13 @@ export default function Dashboard() {
         if (selectedMachine) {
             navigate(`/qc-entry/${templateId}?machineId=${selectedMachine.id}`);
         }
+    };
+
+    const handleStartTask = (task: Task) => {
+        let url = `/qc-entry/${task.templateId}?taskId=${task.id}`;
+        if (task.machineId) url += `&machineId=${task.machineId}`;
+        if (task.productId) url += `&productId=${task.productId}`;
+        navigate(url);
     };
 
     const getTemplatesForMachine = (machineId: number) => {
@@ -127,51 +151,107 @@ export default function Dashboard() {
             </header>
 
             <main className="p-6">
-                <h2 className="text-2xl font-bold text-[var(--color-text)] mb-2">{t.dashboard.title}</h2>
-                <p className="text-[var(--color-text-secondary)] mb-6">{t.dashboard.subtitle}</p>
-
-                {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <div className="w-12 h-12 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
+                {/* Active Tasks Section */}
+                <div className="mb-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <LayoutList className="text-teal-500" size={24} />
+                        <h2 className="text-2xl font-bold text-[var(--color-text)]">{t.dashboard.activeTasks}</h2>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {machines.filter(m => m.active).map((machine) => {
-                            const machineTemplateCount = getTemplatesForMachine(machine.id).length;
 
-                            return (
+                    {loading ? (
+                        <div className="grid grid-cols-1 gap-4">
+                            <div className="h-32 bg-[var(--color-surface)] animate-pulse rounded-2xl border-2 border-[var(--color-border)]" />
+                        </div>
+                    ) : tasks.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {tasks.map((task) => (
                                 <button
-                                    key={machine.id}
-                                    onClick={() => handleMachineSelect(machine)}
-                                    className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] rounded-2xl p-5 transition-all hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10 active:scale-98 text-left"
+                                    key={task.id}
+                                    onClick={() => handleStartTask(task)}
+                                    className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl shadow-teal-500/20 active:scale-98 text-left group"
                                 >
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/30">
-                                            <Cog size={32} />
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                            <ClipboardCheck size={28} />
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-xl font-bold text-[var(--color-text)]">{machine.name}</h3>
-                                            <p className="text-sm text-[var(--color-text-secondary)] font-mono">{machine.code}</p>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <span className="px-3 py-1 bg-teal-500/10 text-teal-600 rounded-full text-sm font-medium">
-                                                    {machineTemplateCount} Şablon
-                                                </span>
-                                            </div>
+                                        <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium flex items-center gap-1">
+                                            <Calendar size={12} />
+                                            {t.dashboard.startTask}
                                         </div>
-                                        <ArrowRight size={24} className="text-teal-500 mt-2" />
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-1">{task.templateName}</h3>
+                                    <div className="space-y-1">
+                                        {task.machineName && (
+                                            <p className="text-white/80 text-sm flex items-center gap-2">
+                                                <Cog size={14} /> {task.machineName}
+                                            </p>
+                                        )}
+                                        {task.productName && (
+                                            <p className="text-white/80 text-sm flex items-center gap-2">
+                                                <LayoutList size={14} /> {task.productName}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="mt-4 flex items-center gap-2 text-sm font-bold bg-white/20 w-fit px-4 py-2 rounded-lg group-hover:bg-white/30 transition-colors">
+                                        {t.dashboard.startQc} <ArrowRight size={16} />
                                     </div>
                                 </button>
-                            );
-                        })}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-2xl p-8 text-center text-[var(--color-text-secondary)]">
+                            <p>{t.dashboard.noActiveTasks}</p>
+                        </div>
+                    )}
+                </div>
 
-                {!loading && machines.filter(m => m.active).length === 0 && (
-                    <div className="text-center py-12 text-[var(--color-text-secondary)]">
-                        <Cog size={48} className="mx-auto mb-4 opacity-50" />
-                        <p>{t.dashboard.noMachines}</p>
+                {/* Manual Machine Browse Section */}
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Cog className="text-teal-500" size={24} />
+                        <h2 className="text-2xl font-bold text-[var(--color-text)]">{t.dashboard.allMachines}</h2>
                     </div>
-                )}
+
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-24 bg-[var(--color-surface)] animate-pulse rounded-2xl border-2 border-[var(--color-border)]" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {machines.filter(m => m.active).map((machine) => {
+                                const machineTemplateCount = getTemplatesForMachine(machine.id).length;
+
+                                return (
+                                    <button
+                                        key={machine.id}
+                                        onClick={() => handleMachineSelect(machine)}
+                                        className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] rounded-2xl p-4 transition-all hover:border-teal-500/50 hover:shadow-lg active:scale-98 text-left"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600">
+                                                <Cog size={24} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-[var(--color-text)] truncate">{machine.name}</h3>
+                                                <p className="text-xs text-[var(--color-text-secondary)]">{machineTemplateCount} {t.dashboard.templateCount}</p>
+                                            </div>
+                                            <ArrowRight size={20} className="text-teal-500/50" />
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {!loading && machines.filter(m => m.active).length === 0 && (
+                        <div className="text-center py-12 text-[var(--color-text-secondary)]">
+                            <Cog size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>{t.dashboard.noMachines}</p>
+                        </div>
+                    )}
+                </div>
             </main>
 
             {/* ===== TEMPLATE SELECTION MODAL (Full Screen) ===== */}
@@ -204,7 +284,7 @@ export default function Dashboard() {
                             </button>
                         </div>
 
-                        <div className="flex-1 bg-[var(--color-bg)] overflow-y-auto p-6">
+                        <div className="flex-1 bg-[var(--color-bg)] overflow-y-auto p-6 pb-20">
                             <h3 className="text-xl font-bold text-[var(--color-text)] mb-2">
                                 {t.templateModal.title}
                             </h3>
@@ -226,7 +306,7 @@ export default function Dashboard() {
                                                     bg-gradient-to-r ${colorScheme.from} ${colorScheme.to}
                                                     rounded-2xl text-white text-left
                                                     shadow-xl ${colorScheme.shadow}
-                                                    hover:scale-[1.02] active:scale-[0.98]
+                                                    hover:scale-[1.01] active:scale-[0.98]
                                                     transition-all duration-200
                                                     touch-target
                                                 `}
@@ -266,15 +346,6 @@ export default function Dashboard() {
                             )}
                         </div>
 
-                        {/* Modal Footer */}
-                        <div className="bg-[var(--color-surface)] border-t border-[var(--color-border)] p-4">
-                            <button
-                                onClick={closeTemplateModal}
-                                className="w-full py-4 rounded-xl border-2 border-[var(--color-border)] text-[var(--color-text)] font-medium text-lg hover:bg-[var(--color-surface-hover)] transition-colors"
-                            >
-                                {t.common.back}
-                            </button>
-                        </div>
                     </div>
                 </>
             )}
