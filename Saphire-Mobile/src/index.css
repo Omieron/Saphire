@@ -12,10 +12,16 @@
 
   --color-success: #10B981;
   /* Emerald 500 - for status only */
+  --color-success-soft: rgba(16, 185, 129, 0.1);
   --color-warning: #F59E0B;
   /* Amber 500 */
+  --color-warning-soft: rgba(245, 158, 11, 0.1);
   --color-error: #EF4444;
   /* Red 500 */
+  --color-error-soft: rgba(239, 68, 68, 0.1);
+  --color-info: #3B82F6;
+  /* Blue 500 */
+  --color-info-soft: rgba(59, 130, 246, 0.1);
 
   --radius-sm: 8px;
   --radius-md: 12px;

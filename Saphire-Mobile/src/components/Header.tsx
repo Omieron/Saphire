@@ -38,7 +38,7 @@ export default function Header({
                     {showBack && (
                         <button
                             onClick={handleBack}
-                            className="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors active:scale-90"
+                            className="p-3 bg-white/20 text-white rounded-xl shadow-lg border border-white/20 active:scale-90 transition-all"
                         >
                             <ArrowLeft size={24} />
                         </button>

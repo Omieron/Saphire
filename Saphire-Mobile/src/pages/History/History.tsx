@@ -66,9 +66,9 @@ export default function History() {
                             <div className="w-12 h-12 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
                         </div>
                     ) : records.length === 0 ? (
-                        <div className="text-center py-12 text-[var(--color-text-secondary)] admin-card p-10">
-                            <Clock size={48} className="mx-auto mb-4 opacity-50" />
-                            <p className="text-lg">{t.history.empty}</p>
+                        <div className="text-center py-12 text-[var(--color-text-secondary)] admin-card p-10 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl">
+                            <Clock size={48} className="mx-auto mb-4 opacity-50 text-[var(--color-primary)]" />
+                            <p className="text-lg font-bold">{t.history.empty}</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,7 +80,7 @@ export default function History() {
                                         className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 flex items-center justify-between admin-card admin-card-hover"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500">
+                                            <div className="w-12 h-12 bg-[var(--color-primary-soft)] rounded-xl flex items-center justify-center text-[var(--color-primary)]">
                                                 <Clock size={24} />
                                             </div>
                                             <div>
