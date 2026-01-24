@@ -35,6 +35,11 @@ export const exportQcRecordsToPdf = (records: QcFormRecord[], t: Translations, l
     // Header with Logo (Top Left)
     if (logoBase64) {
         try {
+            // Draw a subtle vertical separator line
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.2);
+            doc.line(51, 10, 51, 30);
+
             doc.addImage(logoBase64, 'AUTO', 14, 10, 35, 20);
         } catch (e) {
             console.error('List PDF Logo error:', e);
@@ -55,11 +60,11 @@ export const exportQcRecordsToPdf = (records: QcFormRecord[], t: Translations, l
 
     doc.setFontSize(18);
     doc.setTextColor(COLORS.PRIMARY[0], COLORS.PRIMARY[1], COLORS.PRIMARY[2]);
-    doc.text(t.pdfExport.listTitle, 55, 19);
+    doc.text(t.pdfExport.listTitle, 55, 18.5);
 
     doc.setFontSize(10);
     doc.setTextColor(COLORS.SECONDARY[0], COLORS.SECONDARY[1], COLORS.SECONDARY[2]);
-    doc.text(`${t.pdfExport.createdDate}: ${timestamp}`, 55, 27);
+    doc.text(`${t.pdfExport.createdDate}: ${timestamp}`, 55, 26.5);
 
     const tableData = records.map(record => [
         `#${record.id}`,
@@ -107,6 +112,11 @@ export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations,
     // Header with Logo (Top Left)
     if (logoBase64) {
         try {
+            // Draw a subtle vertical separator line
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.2);
+            doc.line(51, 10, 51, 30);
+
             doc.addImage(logoBase64, 'AUTO', 14, 10, 35, 20);
         } catch (e) {
             console.error('Single PDF Logo error:', e);
@@ -129,12 +139,12 @@ export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations,
     // Header Content
     doc.setFontSize(22);
     doc.setTextColor(13, 148, 136); // Teal-600
-    doc.text(record.templateName, 55, 19);
+    doc.text(record.templateName, 55, 17.5);
 
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`${t.pdfExport.reportDate}: ${timestamp}`, 55, 26);
-    doc.text(`${t.pdfExport.recordId}: #${record.id} | ${t.pdfExport.templateCode}: ${record.templateCode}`, 55, 31);
+    doc.text(`${t.pdfExport.reportDate}: ${timestamp}`, 55, 24.5);
+    doc.text(`${t.pdfExport.recordId}: #${record.id} | ${t.pdfExport.templateCode}: ${record.templateCode}`, 55, 30);
 
     // Summary Info Table
     autoTable(doc, {
@@ -199,10 +209,10 @@ export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations,
         bodyStyles: { minCellHeight: 20, valign: 'top', font: 'Roboto', fontStyle: 'normal' },
         styles: { fontSize: 9, font: 'Roboto', cellPadding: 2 },
         columnStyles: hasRejection ? {
-            0: { cellWidth: 91 },
-            1: { cellWidth: 91 }
+            0: { cellWidth: 90 },
+            1: { cellWidth: 90 }
         } : {
-            0: { cellWidth: 91 }
+            0: { cellWidth: 90 }
         },
         didParseCell: (data) => {
             if (data.section === 'head') {
