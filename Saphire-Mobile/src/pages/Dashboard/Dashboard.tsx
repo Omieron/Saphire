@@ -24,7 +24,7 @@ interface Task {
     templateId: number;
     productId?: number;
     productName?: string;
-    isActive: boolean;
+    active: boolean;
 }
 
 interface Machine {
@@ -86,7 +86,7 @@ export default function Dashboard() {
     ];
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg)] flex flex-col animate-fade-in no-scrollbar">
+        <div className="min-h-screen bg-[var(--color-bg)] flex flex-col animate-fade-in">
             <ConfirmModal
                 show={showLogoutConfirm}
                 title={t.settings.logout}

@@ -144,24 +144,20 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         List<TaskAssignmentResponse> activeTasks = new ArrayList<>();
 
         for (TaskAssignmentEntity assignment : assignments) {
-            boolean isCurrentlyActive = false;
-            
             for (TaskScheduleEntity schedule : assignment.getSchedules()) {
-                boolean timeMatches = currentTime.isAfter(schedule.getStartTime()) && currentTime.isBefore(schedule.getEndTime());
-                
-                if (!timeMatches) continue;
+                boolean dateMatches = false;
 
                 if (assignment.getType() == TaskAssignmentTypeEnum.RECURRING) {
                     if (schedule.getDayOfWeek() != null && schedule.getDayOfWeek() == dayOfWeek) {
-                        isCurrentlyActive = true;
+                        dateMatches = true;
                     }
                 } else if (assignment.getType() == TaskAssignmentTypeEnum.ONCE) {
                     if (schedule.getSpecificDate() != null && schedule.getSpecificDate().equals(today)) {
-                        isCurrentlyActive = true;
+                        dateMatches = true;
                     }
                 }
 
-                if (isCurrentlyActive) {
+                if (dateMatches) {
                     // Check if already completed in this window
                     LocalDateTime windowStart = LocalDateTime.of(today, schedule.getStartTime());
                     LocalDateTime windowEnd = LocalDateTime.of(today, schedule.getEndTime());
@@ -173,8 +169,8 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
                     
                     if (!alreadyDone) {
                         activeTasks.add(toResponse(assignment));
+                        break; // Found a matching schedule that hasn't been completed for today
                     }
-                    break; // Found a matching schedule that hasn't been completed
                 }
             }
         }
