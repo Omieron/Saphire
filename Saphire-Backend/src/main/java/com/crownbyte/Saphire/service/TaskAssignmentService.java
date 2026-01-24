@@ -11,4 +11,5 @@ public interface TaskAssignmentService {
     TaskAssignmentResponse update(Long id, TaskAssignmentRequest request);
     void delete(Long id);
     List<TaskAssignmentResponse> getActiveTasksForUser(Long userId);
+    TaskAssignmentResponse getById(Long id);
 }

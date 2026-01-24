@@ -9,6 +9,7 @@ interface HeaderProps {
     showBack?: boolean;
     onBack?: () => void;
     rightActions?: ReactNode;
+    centerContent?: ReactNode;
     isDashboard?: boolean;
 }
 
@@ -18,6 +19,7 @@ export default function Header({
     showBack = false,
     onBack,
     rightActions,
+    centerContent,
     isDashboard = false
 }: HeaderProps) {
     const navigate = useNavigate();
@@ -34,7 +36,7 @@ export default function Header({
     return (
         <header className="bg-gradient-to-r from-teal-700 to-teal-600 text-white px-6 py-5 shadow-lg sticky top-0 z-30">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex-1 flex items-center gap-4">
                     {showBack && (
                         <button
                             onClick={handleBack}
@@ -44,26 +46,30 @@ export default function Header({
                         </button>
                     )}
 
-                    <div>
+                    <div className="max-w-[150px] sm:max-w-none">
                         {isDashboard ? (
                             <>
-                                <h1 className="text-2xl font-bold tracking-tight">Saphire</h1>
-                                <p className="text-white/80 text-sm font-medium">{user?.fullName}</p>
+                                <h1 className="text-2xl font-bold tracking-tight text-white truncate">Saphire</h1>
+                                <p className="text-white/80 text-sm font-medium truncate">{user?.fullName}</p>
                             </>
                         ) : (
                             <div className="flex flex-col">
-                                <h1 className="text-xl font-bold">{title}</h1>
-                                {subtitle && <p className="text-white/80 text-xs">{subtitle}</p>}
+                                <h1 className="text-xl font-bold text-white truncate">{title}</h1>
+                                {subtitle && <p className="text-white/80 text-xs truncate">{subtitle}</p>}
                             </div>
                         )}
                     </div>
                 </div>
 
-                {rightActions && (
-                    <div className="flex items-center gap-2">
-                        {rightActions}
+                {centerContent && (
+                    <div className="flex-1 flex justify-center">
+                        {centerContent}
                     </div>
                 )}
+
+                <div className="flex-1 flex items-center justify-end gap-2">
+                    {rightActions}
+                </div>
             </div>
         </header>
     );

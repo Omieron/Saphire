@@ -178,6 +178,13 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         return activeTasks;
     }
 
+    @Override
+    public TaskAssignmentResponse getById(Long id) {
+        return taskAssignmentRepository.findById(id)
+                .map(this::toResponse)
+                .orElseThrow(() -> new RuntimeException("Task assignment not found"));
+    }
+
     private TaskAssignmentResponse toResponse(TaskAssignmentEntity entity) {
         String machineName = entity.getMachineId() != null ? 
                 machineRepository.findById(entity.getMachineId()).map(m -> m.getName()).orElse(null) : null;

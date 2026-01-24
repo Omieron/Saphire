@@ -36,5 +36,6 @@ export const productApi = {
 export const taskAssignmentApi = {
     getAll: () => axios.get('/api/v1/task-assignments'),
     getActiveTasks: (userId: number) => axios.get(`/api/v1/task-assignments/active/${userId}`),
+    getById: (id: number) => axios.get(`/api/v1/task-assignments/${id}`),
 };
 

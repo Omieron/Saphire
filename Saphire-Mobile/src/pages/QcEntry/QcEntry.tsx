@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Send, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { templateApi, recordApi } from '../../api';
+import { templateApi, recordApi, taskAssignmentApi } from '../../api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ConfirmModal from '../../components/ConfirmModal';
 import Header from '../../components/Header';
@@ -100,6 +100,13 @@ export default function QcEntry() {
     const taskId = searchParams.get('taskId');
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const [now, setNow] = useState(new Date());
+    const [taskEndTime, setTaskEndTime] = useState<Date | null>(null);
+    const [isGracePeriod, setIsGracePeriod] = useState(false);
+    const [graceSeconds, setGraceSeconds] = useState(600); // 10 minutes
+    const [isExpired, setIsExpired] = useState(false);
+    const [showGraceModal, setShowGraceModal] = useState(false);
+    const [showHardExpiryModal, setShowHardExpiryModal] = useState(false);
 
     const [template, setTemplate] = useState<Template | null>(null);
     const [loading, setLoading] = useState(true);
@@ -117,8 +124,42 @@ export default function QcEntry() {
                 .then(res => setTemplate(res.data.data))
                 .catch(err => console.error('Template fetch error:', err))
                 .finally(() => setLoading(false));
+
+            if (taskId) {
+                taskAssignmentApi.getById(parseInt(taskId))
+                    .then((res: any) => {
+                        const task = res.data.data;
+                        if (task && task.schedules) {
+                            const currentDay = now.getDay() === 0 ? 7 : now.getDay();
+                            const todayStr = now.toISOString().split('T')[0];
+                            const schedule = task.schedules.find((s: any) =>
+                                (s.dayOfWeek === currentDay) || (s.specificDate === todayStr)
+                            );
+                            if (schedule) {
+                                const [h, m] = schedule.endTime.split(':').map(Number);
+                                const end = new Date();
+                                end.setHours(h, m, 0, 0);
+                                setTaskEndTime(end);
+
+                                // Check if already in grace period upon landing
+                                if (now > end) {
+                                    const diffSeconds = Math.floor((now.getTime() - end.getTime()) / 1000);
+                                    if (diffSeconds < 600) {
+                                        setIsGracePeriod(true);
+                                        setShowGraceModal(true);
+                                        setGraceSeconds(600 - diffSeconds);
+                                    } else {
+                                        setIsExpired(true);
+                                        setShowHardExpiryModal(true);
+                                    }
+                                }
+                            }
+                        }
+                    })
+                    .catch((e: any) => console.error('Task fetch error:', e));
+            }
         }
-    }, [templateId]);
+    }, [templateId, taskId]);
 
     useEffect(() => {
         if (templateId && machineId) {
@@ -138,6 +179,32 @@ export default function QcEntry() {
             localStorage.setItem(`qc_draft_${templateId}_${machineId}`, JSON.stringify(values));
         }
     }, [values, templateId, machineId]);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const currentNow = new Date();
+            setNow(currentNow);
+
+            if (taskEndTime && !isExpired) {
+                if (currentNow > taskEndTime) {
+                    if (!isGracePeriod) {
+                        setIsGracePeriod(true);
+                        setShowGraceModal(true);
+                    } else {
+                        setGraceSeconds(prev => {
+                            if (prev <= 1) {
+                                setIsExpired(true);
+                                setShowHardExpiryModal(true);
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }
+                }
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [taskEndTime, isGracePeriod, isExpired, templateId]); // templateId added to force reset if needed
 
     const updateValue = useCallback((key: string, val: any) => {
         setValues(prev => ({ ...prev, [key]: val }));
@@ -211,6 +278,10 @@ export default function QcEntry() {
     };
 
     const handleSubmit = async () => {
+        if (isExpired) {
+            alert(t.qcEntry.timeEndedMessage);
+            return;
+        }
         setShowSubmitConfirm(false);
         setSubmitting(true);
         try {
@@ -321,12 +392,46 @@ export default function QcEntry() {
         <div className="min-h-screen bg-[var(--color-bg)] pb-10">
             <ConfirmModal show={showBackConfirm} title="Çıkmak istediğinize emin misiniz?" message="Girdiğiniz veriler otomatik olarak kaydedildi." onConfirm={() => navigate('/dashboard')} onCancel={() => setShowBackConfirm(false)} confirmText="Çık" confirmColor="red" />
             <ConfirmModal show={showSubmitConfirm} title="Onaya göndermek istiyor musunuz?" message={`${prog.filled} / ${prog.total} alan dolduruldu.`} onConfirm={handleSubmit} onCancel={() => setShowSubmitConfirm(false)} confirmText="Gönder" confirmColor="teal" />
+            <ConfirmModal
+                show={showGraceModal}
+                title={t.qcEntry.timeWarning}
+                message={t.qcEntry.graceMessage}
+                onConfirm={() => setShowGraceModal(false)}
+                onCancel={() => setShowGraceModal(false)}
+                confirmText={t.common.ok}
+                confirmColor="red"
+                singleButton={true}
+            />
+            <ConfirmModal
+                show={showHardExpiryModal}
+                title={t.qcEntry.timeEnded}
+                message={t.qcEntry.timeEndedMessage}
+                onConfirm={() => navigate('/dashboard')}
+                onCancel={() => navigate('/dashboard')}
+                confirmText={t.common.ok}
+                confirmColor="red"
+                singleButton={true}
+            />
 
             <Header
                 title={t.qcEntry.title}
                 subtitle={template?.name}
                 showBack
                 onBack={handleBack}
+                centerContent={
+                    (isGracePeriod || isExpired) && (
+                        <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl ${isExpired ? 'bg-red-500 shadow-red-500/40' : 'bg-amber-500 shadow-amber-500/40'} shadow-lg border border-white/30 animate-pulse`}>
+                            <div className="flex flex-col items-center">
+                                <span className="text-[8px] font-black uppercase tracking-[0.2em] opacity-80 leading-none mb-0.5">
+                                    {isExpired ? t.qcEntry.timeEnded : t.qcEntry.gracePeriod}
+                                </span>
+                                <span className="font-mono text-base font-black leading-none">
+                                    {isExpired ? '00:00' : `${Math.floor(graceSeconds / 60)}:${(graceSeconds % 60).toString().padStart(2, '0')}`}
+                                </span>
+                            </div>
+                        </div>
+                    )
+                }
                 rightActions={
                     <button
                         onClick={() => setShowSubmitConfirm(true)}

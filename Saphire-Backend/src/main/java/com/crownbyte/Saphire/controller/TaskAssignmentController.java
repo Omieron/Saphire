@@ -22,6 +22,11 @@ public class TaskAssignmentController {
         return ResponseEntity.ok(ApiResponse.success(taskAssignmentService.getAll(search)));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<TaskAssignmentResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(taskAssignmentService.getById(id)));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<TaskAssignmentResponse>> create(@RequestBody TaskAssignmentRequest request) {
         return ResponseEntity.ok(ApiResponse.success(taskAssignmentService.create(request)));

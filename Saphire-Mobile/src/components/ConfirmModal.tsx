@@ -9,6 +9,7 @@ interface ConfirmModalProps {
     confirmText?: string;
     cancelText?: string;
     confirmColor?: 'red' | 'teal' | 'green' | 'blue';
+    singleButton?: boolean;
 }
 
 export default function ConfirmModal({
@@ -19,7 +20,8 @@ export default function ConfirmModal({
     onCancel,
     confirmText = 'Onayla',
     cancelText = 'İptal',
-    confirmColor = 'teal'
+    confirmColor = 'teal',
+    singleButton = false
 }: ConfirmModalProps) {
     if (!show) return null;
 
@@ -78,13 +80,15 @@ export default function ConfirmModal({
                         </h3>
                     </div>
 
-                    {/* Close Button top-right */}
-                    <button
-                        onClick={onCancel}
-                        className="absolute top-5 right-5 p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)] rounded-xl transition-all active:scale-90"
-                    >
-                        <X size={20} />
-                    </button>
+                    {!singleButton && (
+                        /* Close Button top-right */
+                        <button
+                            onClick={onCancel}
+                            className="absolute top-5 right-5 p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)] rounded-xl transition-all active:scale-90"
+                        >
+                            <X size={20} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Body Content */}
@@ -96,12 +100,14 @@ export default function ConfirmModal({
 
                 {/* Footer Actions */}
                 <div className="px-6 py-5 bg-[var(--color-bg)] border-t border-[var(--color-border)] flex gap-3">
-                    <button
-                        onClick={onCancel}
-                        className="flex-1 px-4 py-4 border-2 border-[var(--color-border)] text-[var(--color-text)] rounded-2xl bg-[var(--color-surface)] font-black uppercase tracking-widest text-[11px] transition-all active:scale-95 shadow-sm"
-                    >
-                        {cancelText}
-                    </button>
+                    {!singleButton && (
+                        <button
+                            onClick={onCancel}
+                            className="flex-1 px-4 py-4 border-2 border-[var(--color-border)] text-[var(--color-text)] rounded-2xl bg-[var(--color-surface)] font-black uppercase tracking-widest text-[11px] transition-all active:scale-95 shadow-sm"
+                        >
+                            {cancelText}
+                        </button>
+                    )}
                     <button
                         onClick={onConfirm}
                         className={`flex-1 px-4 py-4 ${style.btnBg} text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl transition-all active:scale-95 border-b-4 border-black/20`}
