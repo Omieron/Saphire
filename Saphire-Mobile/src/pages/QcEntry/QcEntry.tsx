@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Send, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight, X, LayoutList } from 'lucide-react';
+import { Send, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { templateApi, recordApi } from '../../api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -99,7 +99,7 @@ export default function QcEntry() {
     const productId = searchParams.get('productId');
     const taskId = searchParams.get('taskId');
     const navigate = useNavigate();
-    const { t, language } = useLanguage();
+    const { t } = useLanguage();
 
     const [template, setTemplate] = useState<Template | null>(null);
     const [loading, setLoading] = useState(true);
@@ -300,8 +300,14 @@ export default function QcEntry() {
     if (!template || !template.sections?.length) return (
         <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center justify-center p-6 text-center">
             <AlertTriangle size={48} className="text-red-500 mb-4" />
-            <p className="text-[var(--color-text)] font-medium">Şablon bulunamadı veya boş.</p>
-            <button onClick={() => navigate('/dashboard')} className="mt-4 text-teal-600 font-bold">Geri Dön</button>
+            <p className="text-[var(--color-text)] font-medium mb-6">Şablon bulunamadı veya boş.</p>
+            <button
+                onClick={() => navigate('/dashboard')}
+                className="px-8 py-3 bg-transparent text-teal-600 border-2 border-teal-600/20 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-teal-600/5 active:scale-95 transition-all flex items-center gap-2"
+            >
+                <ChevronLeft size={20} />
+                Geri Dön
+            </button>
         </div>
     );
 

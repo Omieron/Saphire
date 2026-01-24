@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { recordApi } from '../../api';
-import { Clock } from 'lucide-react';
+import { Clock, Cog, LogOut } from 'lucide-react';
 import Header from '../../components/Header';
+import ConfirmModal from '../../components/ConfirmModal';
 
 interface HistoryRecord {
     id: number;
@@ -17,9 +19,11 @@ interface HistoryRecord {
 
 export default function History() {
     const { t, language } = useLanguage();
+    const { logout } = useAuth();
     const navigate = useNavigate();
     const [records, setRecords] = useState<HistoryRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     useEffect(() => {
         fetchRecords();
@@ -57,6 +61,34 @@ export default function History() {
                 title={t.history.title}
                 showBack
                 onBack={() => navigate('/dashboard')}
+                rightActions={
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => navigate('/settings')}
+                            className="p-3 bg-white/20 text-white rounded-xl shadow-lg border border-white/30 active:scale-90 transition-all"
+                            title={t.settings.title}
+                        >
+                            <Cog size={22} />
+                        </button>
+                        <button
+                            onClick={() => setShowLogoutConfirm(true)}
+                            className="p-3 bg-red-500 text-white rounded-xl shadow-lg border border-red-400 active:scale-90 transition-all"
+                            title={t.settings.logout}
+                        >
+                            <LogOut size={22} />
+                        </button>
+                    </div>
+                }
+            />
+
+            <ConfirmModal
+                show={showLogoutConfirm}
+                title={t.settings.logout}
+                message={t.qcEntry.exitConfirm}
+                onConfirm={logout}
+                onCancel={() => setShowLogoutConfirm(false)}
+                confirmText={t.settings.logout}
+                confirmColor="red"
             />
 
             <main className="p-6">
