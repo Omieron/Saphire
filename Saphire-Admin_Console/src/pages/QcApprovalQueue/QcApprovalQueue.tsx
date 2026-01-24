@@ -372,19 +372,19 @@ export default function QcApprovalQueue() {
                         </div>
 
                         {/* Simplified Stepper for Approval Queue */}
-                        <div className="px-6 py-4 bg-[var(--color-bg)]/30 border-b border-[var(--color-border)]">
+                        <div className="px-6 py-6 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                             <div className="flex items-center justify-between max-w-md mx-auto relative">
-                                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[var(--color-border)] -translate-y-1/2 -z-0" />
-                                <div className="absolute top-1/2 left-0 w-1/2 h-0.5 bg-teal-500 -translate-y-1/2 transition-all duration-500 -z-0" />
+                                <div className="absolute top-5 left-0 w-full h-0.5 bg-[var(--color-border)] -z-0" />
+                                <div className="absolute top-5 left-0 w-1/2 h-0.5 bg-teal-500 transition-all duration-500 -z-0" />
 
                                 {[
                                     { key: 'SUBMITTED', label: t.qcRecords.statusSubmitted, icon: FileCheck, active: true, completed: true },
                                     { key: 'FINALIZED', label: 'ONAY / RED', icon: CheckCircle, active: false, completed: false }
                                 ].map((step, idx) => (
-                                    <div key={idx} className="flex flex-col items-center gap-2 relative z-10 bg-[var(--color-surface)] px-4">
+                                    <div key={idx} className="flex flex-col items-center gap-2 relative z-10 px-4">
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${step.completed ? 'bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/20' :
                                             step.active ? 'border-teal-500 text-teal-600 bg-teal-50' :
-                                                'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]'
+                                                'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)]'
                                             }`}>
                                             <step.icon size={20} />
                                         </div>

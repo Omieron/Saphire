@@ -343,12 +343,12 @@ export default function QcRecords() {
                         </div>
 
                         {/* Workflow Stepper */}
-                        <div className="px-6 py-4 bg-[var(--color-bg)]/30 border-b border-[var(--color-border)]">
+                        <div className="px-6 py-6 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                             <div className="flex items-center justify-between max-w-2xl mx-auto relative text-left">
                                 {/* Connecting Lines */}
-                                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[var(--color-border)] -translate-y-1/2 -z-0" />
+                                <div className="absolute top-4 left-0 w-full h-0.5 bg-[var(--color-border)] -z-0" />
                                 <div
-                                    className="absolute top-1/2 left-0 h-0.5 bg-teal-500 -translate-y-1/2 transition-all duration-500 -z-0"
+                                    className="absolute top-4 left-0 h-0.5 bg-teal-500 transition-all duration-500 -z-0"
                                     style={{
                                         width: selectedRecord.status === 'APPROVED' || selectedRecord.status === 'REJECTED' ? '100%' :
                                             selectedRecord.status === 'SUBMITTED' ? '66%' :
@@ -369,10 +369,10 @@ export default function QcRecords() {
                                     const isActive = (step.key === selectedRecord.status) || (step.key === 'FINALIZED' && ['APPROVED', 'REJECTED'].includes(selectedRecord.status));
 
                                     return (
-                                        <div key={idx} className="flex flex-col items-center gap-2 relative z-10 bg-[var(--color-surface)] px-2">
+                                        <div key={idx} className="flex flex-col items-center gap-2 relative z-10 px-2">
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted ? 'bg-teal-500 border-teal-500 text-white' :
                                                 isActive ? 'border-teal-500 text-teal-600 bg-teal-50' :
-                                                    'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]'
+                                                    'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)]'
                                                 }`}>
                                                 <step.icon size={16} />
                                             </div>
