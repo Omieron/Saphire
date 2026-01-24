@@ -6,6 +6,7 @@ export interface Company {
     name: string;
     code: string;
     active: boolean;
+    logo?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -14,6 +15,7 @@ export interface CompanyRequest {
     name: string;
     code: string;
     active?: boolean;
+    logo?: string;
 }
 
 export const companyApi = {

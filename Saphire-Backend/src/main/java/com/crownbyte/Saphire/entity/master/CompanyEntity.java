@@ -29,6 +29,9 @@ public class CompanyEntity extends BaseEntity {
     @Builder.Default
     private Boolean active = true;
 
+    @Column(columnDefinition = "TEXT")
+    private String logo;
+
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     @Builder.Default
     private List<LocationEntity> locations = new ArrayList<>();

@@ -54,6 +54,7 @@ public class CompanyService implements CompanyServiceImpl {
                 .name(request.getName())
                 .code(request.getCode())
                 .active(request.getActive() != null ? request.getActive() : true)
+                .logo(request.getLogo())
                 .build();
 
         CompanyEntity saved = companyRepository.save(entity);
@@ -70,6 +71,7 @@ public class CompanyService implements CompanyServiceImpl {
         if (request.getActive() != null) {
             entity.setActive(request.getActive());
         }
+        entity.setLogo(request.getLogo());
 
         CompanyEntity saved = companyRepository.save(entity);
         return toResponse(saved);
@@ -95,6 +97,7 @@ public class CompanyService implements CompanyServiceImpl {
                 .name(entity.getName())
                 .code(entity.getCode())
                 .active(entity.getActive())
+                .logo(entity.getLogo())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

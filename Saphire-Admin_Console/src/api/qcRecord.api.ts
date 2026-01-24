@@ -39,6 +39,8 @@ export interface QcFormRecord {
     rejectionReason: string | null;
     notes: string | null;
     values: QcFormValue[];
+    companyId?: number;
+    companyLogo?: string;
     createdAt: string;
 }
 

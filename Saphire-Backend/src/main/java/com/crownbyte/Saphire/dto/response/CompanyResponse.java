@@ -13,6 +13,7 @@ public class CompanyResponse {
     private String name;
     private String code;
     private Boolean active;
+    private String logo;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

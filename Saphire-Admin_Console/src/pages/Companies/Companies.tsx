@@ -23,7 +23,7 @@ export default function Companies() {
     const [showForm, setShowForm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [editItem, setEditItem] = useState<Company | null>(null);
-    const [formData, setFormData] = useState<CompanyRequest>({ name: '', code: '', active: true });
+    const [formData, setFormData] = useState<CompanyRequest>({ name: '', code: '', active: true, logo: '' });
     const [saving, setSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [showInactive, setShowInactive] = useState(false);
@@ -75,13 +75,13 @@ export default function Companies() {
 
     const handleAdd = () => {
         setEditItem(null);
-        setFormData({ name: '', code: '', active: true });
+        setFormData({ name: '', code: '', active: true, logo: '' });
         setShowForm(true);
     };
 
     const handleEdit = (item: Company) => {
         setEditItem(item);
-        setFormData({ name: item.name, code: item.code, active: item.active });
+        setFormData({ name: item.name, code: item.code, active: item.active, logo: item.logo });
         setShowForm(true);
     };
 
@@ -192,7 +192,18 @@ export default function Companies() {
                                     filtered.map((company) => (
                                         <tr key={company.id} className="hover:bg-[var(--color-surface-hover)]">
                                             <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">#{company.id}</td>
-                                            <td className="px-6 py-4 text-sm font-medium text-[var(--color-text)]">{company.name}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded bg-[var(--color-bg)] border border-[var(--color-border)] flex items-center justify-center overflow-hidden">
+                                                        {company.logo ? (
+                                                            <img src={company.logo} alt={company.name} className="w-full h-full object-contain" />
+                                                        ) : (
+                                                            <Building2 size={14} className="text-[var(--color-text-secondary)] opacity-50" />
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm font-medium text-[var(--color-text)]">{company.name}</span>
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <span className="px-2 py-1 bg-[var(--color-bg)] rounded font-mono text-xs">{company.code}</span>
                                             </td>
@@ -276,6 +287,85 @@ export default function Companies() {
                                 </div>
                             </div>
 
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-[var(--color-text-secondary)] ml-1 flex items-center gap-2">
+                                    <Building2 size={14} className="text-teal-500" /> Şirket Logosu
+                                </label>
+                                <div className="flex items-center gap-4 p-4 bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)]">
+                                    <div className="w-16 h-16 rounded-xl bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        {formData.logo ? (
+                                            <img src={formData.logo} alt="Logo Preview" className="w-full h-full object-contain" />
+                                        ) : (
+                                            <Building2 size={24} className="text-[var(--color-text-secondary)] opacity-50" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (event) => {
+                                                        const img = new Image();
+                                                        img.onload = () => {
+                                                            const canvas = document.createElement('canvas');
+                                                            const MAX_WIDTH = 400;
+                                                            const MAX_HEIGHT = 400;
+                                                            let width = img.width;
+                                                            let height = img.height;
+
+                                                            if (width > height) {
+                                                                if (width > MAX_WIDTH) {
+                                                                    height *= MAX_WIDTH / width;
+                                                                    width = MAX_WIDTH;
+                                                                }
+                                                            } else {
+                                                                if (height > MAX_HEIGHT) {
+                                                                    width *= MAX_HEIGHT / height;
+                                                                    height = MAX_HEIGHT;
+                                                                }
+                                                            }
+                                                            canvas.width = width;
+                                                            canvas.height = height;
+                                                            const ctx = canvas.getContext('2d');
+                                                            ctx?.drawImage(img, 0, 0, width, height);
+                                                            const dataUrl = canvas.toDataURL('image/png');
+                                                            setFormData({ ...formData, logo: dataUrl });
+                                                        };
+                                                        img.src = event.target?.result as string;
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                            className="hidden"
+                                            id="logo-upload"
+                                        />
+                                        <div className="flex gap-2">
+                                            <label
+                                                htmlFor="logo-upload"
+                                                className="px-4 py-2 bg-teal-500/10 text-teal-600 text-xs font-bold rounded-lg cursor-pointer hover:bg-teal-500/20 transition-all"
+                                            >
+                                                Fotoğraf Seç
+                                            </label>
+                                            {formData.logo && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, logo: '' })}
+                                                    className="px-4 py-2 bg-red-500/10 text-red-600 text-xs font-bold rounded-lg hover:bg-red-500/20 transition-all"
+                                                >
+                                                    Kaldır
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-[var(--color-text-secondary)] italic">
+                                            Önerilen: Kare ikon, max 1MB. Otomatik olarak optimize edilecektir.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="p-4 bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] inline-flex items-center gap-4">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${formData.active ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                                     {formData.active ? <CheckCircle size={20} /> : <XCircle size={20} />}
@@ -329,8 +419,12 @@ export default function Companies() {
 
                                 <div className="space-y-6">
                                     <div className="flex items-start justify-between">
-                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white shadow-xl">
-                                            <Building2 size={32} />
+                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white shadow-xl overflow-hidden border border-white/20">
+                                            {formData.logo ? (
+                                                <img src={formData.logo} alt="Preview" className="w-full h-full object-contain p-1" />
+                                            ) : (
+                                                <Building2 size={32} />
+                                            )}
                                         </div>
                                         <div className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase ${formData.active ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
                                             {formData.active ? 'ACTIVE ENTITY' : 'INACTIVE ENTITY'}

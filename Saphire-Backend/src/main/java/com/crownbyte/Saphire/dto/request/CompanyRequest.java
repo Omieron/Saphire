@@ -17,4 +17,6 @@ public class CompanyRequest {
     private String code;
 
     private Boolean active;
+
+    private String logo;
 }

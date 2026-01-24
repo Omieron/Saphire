@@ -34,7 +34,15 @@ export const exportQcRecordsToPdf = (records: QcFormRecord[], t: Translations, l
 
     // Header with Logo (Top Left)
     if (logoBase64) {
-        doc.addImage(logoBase64, 'PNG', 14, 10, 35, 20);
+        try {
+            doc.addImage(logoBase64, 'AUTO', 14, 10, 35, 20);
+        } catch (e) {
+            console.error('List PDF Logo error:', e);
+            doc.setDrawColor(COLORS.BORDER[0], COLORS.BORDER[1], COLORS.BORDER[2]);
+            doc.rect(14, 10, 35, 20);
+            doc.setFontSize(7);
+            doc.text("IMG ERR", 31.5, 21, { align: 'center' });
+        }
     } else {
         doc.setDrawColor(COLORS.BORDER[0], COLORS.BORDER[1], COLORS.BORDER[2]);
         doc.setLineDashPattern([1.5], 0);
@@ -98,7 +106,15 @@ export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations,
 
     // Header with Logo (Top Left)
     if (logoBase64) {
-        doc.addImage(logoBase64, 'PNG', 14, 10, 35, 20);
+        try {
+            doc.addImage(logoBase64, 'AUTO', 14, 10, 35, 20);
+        } catch (e) {
+            console.error('Single PDF Logo error:', e);
+            doc.setDrawColor(220);
+            doc.rect(14, 10, 35, 20);
+            doc.setFontSize(8);
+            doc.text("IMG ERR", 31.5, 21.5, { align: 'center' });
+        }
     } else {
         // Placeholder rectangle
         doc.setDrawColor(220);

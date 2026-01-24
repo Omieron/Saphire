@@ -227,7 +227,22 @@ export default function QcRecords() {
                     </div>
 
                     <button
-                        onClick={() => exportQcRecordsToPdf(records, t, language)}
+                        onClick={async () => {
+                            // Fetch full details (with logo) for one record per company to get the logos
+                            // In a real production app, you might have a dedicated /api/companies/logos endpoint
+                            // Here we'll fetch the first record of the first company for simplicity, 
+                            // or just use a placeholder if we want to be super safe.
+                            // But for the "List Title" export, we usually want the system logo or the main company logo.
+
+                            let mainLogo: string | undefined = undefined;
+                            if (records.length > 0) {
+                                try {
+                                    const fullRecord = await qcRecordApi.getById(records[0].id);
+                                    mainLogo = fullRecord.data.data.companyLogo;
+                                } catch (e) { console.error('Logo fetch failed', e); }
+                            }
+                            exportQcRecordsToPdf(records, t, language, mainLogo);
+                        }}
                         className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all font-bold h-[40px] shadow-sm shadow-teal-500/20 active:scale-95"
                         title={`${t.common.all} PDF`}
                     >
@@ -461,8 +476,27 @@ export default function QcRecords() {
                         {/* Modal Footer */}
                         <div className="px-6 py-4 border-t border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg)]/50 rounded-b-2xl">
                             <button
-                                onClick={() => exportSingleQcRecordToPdf(selectedRecord, t, language)}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500/10 text-teal-600 rounded-xl text-sm font-bold hover:bg-teal-500/20 active:scale-95 transition-all border border-teal-500/20"
+                                onClick={async (e) => {
+                                    const btn = e.currentTarget;
+                                    const originalContent = btn.innerHTML;
+                                    try {
+                                        btn.disabled = true;
+                                        btn.innerHTML = '<div className="w-4 h-4 border-2 border-teal-600/30 border-t-teal-600 rounded-full animate-spin"></div>...';
+
+                                        // Fetch full record to get the logo
+                                        const response = await qcRecordApi.getById(selectedRecord.id);
+                                        const fullRecord = response.data.data;
+
+                                        console.log('Exporting with logo:', fullRecord.companyLogo ? 'Yes (Length: ' + fullRecord.companyLogo.length + ')' : 'No');
+                                        exportSingleQcRecordToPdf(fullRecord, t, language, fullRecord.companyLogo);
+                                    } catch (error) {
+                                        console.error('Export failed:', error);
+                                    } finally {
+                                        btn.disabled = false;
+                                        btn.innerHTML = originalContent;
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500/10 text-teal-600 rounded-xl text-sm font-bold hover:bg-teal-500/20 active:scale-95 transition-all border border-teal-500/20 disabled:opacity-50"
                             >
                                 <FileDown size={18} />
                                 PDF {t.common.save}

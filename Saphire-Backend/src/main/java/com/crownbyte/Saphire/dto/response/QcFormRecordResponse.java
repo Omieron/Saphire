@@ -36,5 +36,7 @@ public class QcFormRecordResponse {
     private String rejectionReason;
     private String notes;
     private List<QcFormValueResponse> values;
+    private Long companyId;
+    private String companyLogo;
     private LocalDateTime createdAt;
 }

@@ -4,6 +4,7 @@ import com.crownbyte.Saphire.dto.request.QcFormRecordRequest;
 import com.crownbyte.Saphire.dto.request.QcFormValueRequest;
 import com.crownbyte.Saphire.dto.response.QcFormRecordResponse;
 import com.crownbyte.Saphire.dto.response.QcFormValueResponse;
+import com.crownbyte.Saphire.entity.master.CompanyEntity;
 import com.crownbyte.Saphire.entity.master.MachineEntity;
 import com.crownbyte.Saphire.entity.master.UserEntity;
 import com.crownbyte.Saphire.entity.production.ProductInstanceEntity;
@@ -46,6 +47,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     @Transactional(readOnly = true)
     public List<QcFormRecordResponse> getAll(String search, String status, String templateName, String machineName, String userName, LocalDate startDate, LocalDate endDate) {
         Specification<QcFormRecordEntity> spec = (root, query, cb) -> {
+            // ... (rest of spec remains same)
             List<Predicate> predicates = new ArrayList<>();
 
             if (search != null && !search.trim().isEmpty()) {
@@ -107,7 +109,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
 
         return recordRepository.findAll(spec)
                 .stream()
-                .map(this::toResponse)
+                .map(e -> this.toResponse(e, false))
                 .collect(Collectors.toList());
     }
 
@@ -116,7 +118,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     public List<QcFormRecordResponse> getByTemplateId(Long templateId) {
         return recordRepository.findByTemplateId(templateId)
                 .stream()
-                .map(this::toResponse)
+                .map(e -> this.toResponse(e, false))
                 .collect(Collectors.toList());
     }
 
@@ -125,7 +127,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     public List<QcFormRecordResponse> getByMachineId(Long machineId) {
         return recordRepository.findByMachineId(machineId)
                 .stream()
-                .map(this::toResponse)
+                .map(e -> this.toResponse(e, false))
                 .collect(Collectors.toList());
     }
 
@@ -134,7 +136,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     public List<QcFormRecordResponse> getByFilledById(Long userId) {
         return recordRepository.findByFilledById(userId)
                 .stream()
-                .map(this::toResponse)
+                .map(e -> this.toResponse(e, false))
                 .collect(Collectors.toList());
     }
 
@@ -144,7 +146,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
         RecordStatusEnum statusEnum = RecordStatusEnum.valueOf(status.toUpperCase());
         return recordRepository.findByStatus(statusEnum)
                 .stream()
-                .map(this::toResponse)
+                .map(e -> this.toResponse(e, false))
                 .collect(Collectors.toList());
     }
 
@@ -154,7 +156,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
         RecordStatusEnum statusEnum = RecordStatusEnum.valueOf(status.toUpperCase());
         return recordRepository.findByMachineIdAndStatus(machineId, statusEnum)
                 .stream()
-                .map(this::toResponse)
+                .map(e -> this.toResponse(e, false))
                 .collect(Collectors.toList());
     }
 
@@ -163,7 +165,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     public List<QcFormRecordResponse> getByDateRange(LocalDateTime start, LocalDateTime end) {
         return recordRepository.findByCreatedAtBetween(start, end)
                 .stream()
-                .map(this::toResponse)
+                .map(e -> this.toResponse(e, false))
                 .collect(Collectors.toList());
     }
 
@@ -171,11 +173,12 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
     @Transactional(readOnly = true)
     public Optional<QcFormRecordResponse> getById(Long id) {
         return recordRepository.findById(id)
-                .map(this::toResponse);
+                .map(e -> this.toResponse(e, true));
     }
 
     @Override
     public QcFormRecordResponse create(QcFormRecordRequest request, Long filledById) {
+        // ... (creation logic)
         QcFormTemplateEntity template = templateRepository.findById(request.getTemplateId())
                 .orElseThrow(
                         () -> new EntityNotFoundException("Template not found with id: " + request.getTemplateId()));
@@ -183,7 +186,6 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
         UserEntity filledBy = userRepository.findById(filledById)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + filledById));
 
-        // All new records are now submitted immediately
         RecordStatusEnum status = RecordStatusEnum.SUBMITTED;
 
         QcFormRecordEntity entity = QcFormRecordEntity.builder()
@@ -195,7 +197,7 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
                 .status(status)
                 .filledBy(filledBy)
                 .startedAt(LocalDateTime.now())
-                .submittedAt(LocalDateTime.now()) // Set immediately
+                .submittedAt(LocalDateTime.now())
                 .notes(request.getNotes())
                 .values(new ArrayList<>())
                 .build();
@@ -221,7 +223,6 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
             entity.setProductionStep(productionStep);
         }
 
-        // Add values
         if (request.getValues() != null) {
             for (QcFormValueRequest vReq : request.getValues()) {
                 QcFormFieldEntity field = fieldRepository.findById(vReq.getFieldId())
@@ -245,11 +246,10 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
             }
         }
 
-        // Calculate overall result since it's submitted immediately
         entity.setOverallResult(calculateOverallResult(entity));
 
         QcFormRecordEntity saved = recordRepository.save(entity);
-        return toResponse(saved);
+        return toResponse(saved, false);
     }
 
     @Override
@@ -259,12 +259,10 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
 
         entity.setStatus(RecordStatusEnum.SUBMITTED);
         entity.setSubmittedAt(LocalDateTime.now());
-
-        // Calculate overall result
         entity.setOverallResult(calculateOverallResult(entity));
 
         QcFormRecordEntity saved = recordRepository.save(entity);
-        return toResponse(saved);
+        return toResponse(saved, false);
     }
 
     @Override
@@ -282,11 +280,11 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
         if (result != null && !result.isEmpty()) {
             entity.setOverallResult(OverallResultEnum.valueOf(result.toUpperCase()));
         } else {
-            entity.setOverallResult(OverallResultEnum.PASS); // Default to PASS on approval
+            entity.setOverallResult(OverallResultEnum.PASS);
         }
 
         QcFormRecordEntity saved = recordRepository.save(entity);
-        return toResponse(saved);
+        return toResponse(saved, false);
     }
 
     @Override
@@ -300,11 +298,11 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
         if (result != null && !result.isEmpty()) {
             entity.setOverallResult(OverallResultEnum.valueOf(result.toUpperCase()));
         } else {
-            entity.setOverallResult(OverallResultEnum.FAIL); // Default to FAIL on rejection
+            entity.setOverallResult(OverallResultEnum.FAIL);
         }
 
         QcFormRecordEntity saved = recordRepository.save(entity);
-        return toResponse(saved);
+        return toResponse(saved, false);
     }
 
     @Override
@@ -314,9 +312,72 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
  
         entity.setNotes(notes);
         QcFormRecordEntity saved = recordRepository.save(entity);
-        return toResponse(saved);
+        return toResponse(saved, false);
     }
- 
+
+    private QcFormRecordResponse toResponse(QcFormRecordEntity entity, boolean includeLogo) {
+        List<QcFormValueResponse> valuesResponse = entity.getValues()
+                .stream()
+                .map(v -> QcFormValueResponse.builder()
+                        .id(v.getId())
+                        .recordId(entity.getId())
+                        .fieldId(v.getField().getId())
+                        .fieldKey(v.getField().getFieldKey())
+                        .fieldLabel(v.getField().getLabel())
+                        .inputType(v.getField().getInputType().name())
+                        .repeatIndex(v.getRepeatIndex())
+                        .groupKey(v.getGroupKey())
+                        .valueText(v.getValueText())
+                        .valueNumber(v.getValueNumber())
+                        .valueBoolean(v.getValueBoolean())
+                        .valueJson(v.getValueJson())
+                        .result(v.getResult() != null ? v.getResult().name() : null)
+                        .autoEvaluated(v.getAutoEvaluated())
+                        .enteredAt(v.getEnteredAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        CompanyEntity company = entity.getTemplate().getCompany();
+        if (company == null && entity.getMachine() != null && entity.getMachine().getLocation() != null) {
+            company = entity.getMachine().getLocation().getCompany();
+        }
+        if (company == null && entity.getProductInstance() != null && entity.getProductInstance().getLocation() != null) {
+            company = entity.getProductInstance().getLocation().getCompany();
+        }
+
+        return QcFormRecordResponse.builder()
+                .id(entity.getId())
+                .templateId(entity.getTemplate().getId())
+                .templateCode(entity.getTemplate().getCode())
+                .templateName(entity.getTemplate().getName())
+                .machineId(entity.getMachine() != null ? entity.getMachine().getId() : null)
+                .machineName(entity.getMachine() != null ? entity.getMachine().getName() : null)
+                .productInstanceId(entity.getProductInstance() != null ? entity.getProductInstance().getId() : null)
+                .productInstanceSerial(
+                        entity.getProductInstance() != null ? entity.getProductInstance().getSerialNumber() : null)
+                .productionStepId(entity.getProductionStep() != null ? entity.getProductionStep().getId() : null)
+                .headerData(entity.getHeaderData())
+                .scheduledFor(entity.getScheduledFor())
+                .periodStart(entity.getPeriodStart())
+                .periodEnd(entity.getPeriodEnd())
+                .status(entity.getStatus().name())
+                .overallResult(entity.getOverallResult() != null ? entity.getOverallResult().name() : null)
+                .filledById(entity.getFilledBy() != null ? entity.getFilledBy().getId() : null)
+                .filledByName(entity.getFilledBy() != null ? entity.getFilledBy().getFullName() : null)
+                .startedAt(entity.getStartedAt())
+                .submittedAt(entity.getSubmittedAt())
+                .approvedById(entity.getApprovedBy() != null ? entity.getApprovedBy().getId() : null)
+                .approvedByName(entity.getApprovedBy() != null ? entity.getApprovedBy().getFullName() : null)
+                .approvedAt(entity.getApprovedAt())
+                .rejectionReason(entity.getRejectionReason())
+                .notes(entity.getNotes())
+                .values(valuesResponse)
+                .companyId(company != null ? company.getId() : null)
+                .companyLogo(includeLogo && company != null ? company.getLogo() : null)
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
     @Override
     public void delete(Long id) {
         if (!recordRepository.existsById(id)) {
@@ -374,58 +435,5 @@ public class QcFormRecordService implements QcFormRecordServiceImpl {
             return OverallResultEnum.PARTIAL;
         }
         return OverallResultEnum.PASS;
-    }
-
-    private QcFormRecordResponse toResponse(QcFormRecordEntity entity) {
-        List<QcFormValueResponse> valuesResponse = entity.getValues()
-                .stream()
-                .map(v -> QcFormValueResponse.builder()
-                        .id(v.getId())
-                        .recordId(entity.getId())
-                        .fieldId(v.getField().getId())
-                        .fieldKey(v.getField().getFieldKey())
-                        .fieldLabel(v.getField().getLabel())
-                        .inputType(v.getField().getInputType().name())
-                        .repeatIndex(v.getRepeatIndex())
-                        .groupKey(v.getGroupKey())
-                        .valueText(v.getValueText())
-                        .valueNumber(v.getValueNumber())
-                        .valueBoolean(v.getValueBoolean())
-                        .valueJson(v.getValueJson())
-                        .result(v.getResult() != null ? v.getResult().name() : null)
-                        .autoEvaluated(v.getAutoEvaluated())
-                        .enteredAt(v.getEnteredAt())
-                        .build())
-                .collect(Collectors.toList());
-
-        return QcFormRecordResponse.builder()
-                .id(entity.getId())
-                .templateId(entity.getTemplate().getId())
-                .templateCode(entity.getTemplate().getCode())
-                .templateName(entity.getTemplate().getName())
-                .machineId(entity.getMachine() != null ? entity.getMachine().getId() : null)
-                .machineName(entity.getMachine() != null ? entity.getMachine().getName() : null)
-                .productInstanceId(entity.getProductInstance() != null ? entity.getProductInstance().getId() : null)
-                .productInstanceSerial(
-                        entity.getProductInstance() != null ? entity.getProductInstance().getSerialNumber() : null)
-                .productionStepId(entity.getProductionStep() != null ? entity.getProductionStep().getId() : null)
-                .headerData(entity.getHeaderData())
-                .scheduledFor(entity.getScheduledFor())
-                .periodStart(entity.getPeriodStart())
-                .periodEnd(entity.getPeriodEnd())
-                .status(entity.getStatus().name())
-                .overallResult(entity.getOverallResult() != null ? entity.getOverallResult().name() : null)
-                .filledById(entity.getFilledBy() != null ? entity.getFilledBy().getId() : null)
-                .filledByName(entity.getFilledBy() != null ? entity.getFilledBy().getFullName() : null)
-                .startedAt(entity.getStartedAt())
-                .submittedAt(entity.getSubmittedAt())
-                .approvedById(entity.getApprovedBy() != null ? entity.getApprovedBy().getId() : null)
-                .approvedByName(entity.getApprovedBy() != null ? entity.getApprovedBy().getFullName() : null)
-                .approvedAt(entity.getApprovedAt())
-                .rejectionReason(entity.getRejectionReason())
-                .notes(entity.getNotes())
-                .values(valuesResponse)
-                .createdAt(entity.getCreatedAt())
-                .build();
     }
 }
