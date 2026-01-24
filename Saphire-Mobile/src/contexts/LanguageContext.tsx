@@ -95,6 +95,7 @@ const translations = {
             exitConfirm: 'Are you sure you want to exit?',
             dataSaved: 'Your data has been saved automatically.',
             exit: 'Exit',
+            submit: 'Submit',
         },
         history: {
             title: 'My Submissions',
@@ -205,6 +206,7 @@ const translations = {
             exitConfirm: 'Çıkmak istediğinize emin misiniz?',
             dataSaved: 'Girdiğiniz veriler otomatik olarak kaydedildi.',
             exit: 'Çık',
+            submit: 'Gönder',
         },
         history: {
             title: 'Gönderimlerim',
