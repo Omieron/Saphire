@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface QcFormRecordRepository extends JpaRepository<QcFormRecordEntity, Long>, JpaSpecificationExecutor<QcFormRecordEntity> {
+public interface QcFormRecordRepository
+        extends JpaRepository<QcFormRecordEntity, Long>, JpaSpecificationExecutor<QcFormRecordEntity> {
     List<QcFormRecordEntity> findByTemplateId(Long templateId);
 
     List<QcFormRecordEntity> findByMachineId(Long machineId);
@@ -32,7 +33,9 @@ public interface QcFormRecordRepository extends JpaRepository<QcFormRecordEntity
 
     List<QcFormRecordEntity> findTop10ByOrderByCreatedAtDesc();
 
-    @Query("SELECT q.productInstance.product.name, COUNT(q), SUM(CASE WHEN q.overallResult = 'PASS' THEN 1 ELSE 0 END) " +
-           "FROM QcFormRecordEntity q GROUP BY q.productInstance.product.name")
+    @Query("SELECT p.name, COUNT(q), SUM(CASE WHEN q.overallResult = com.crownbyte.Saphire.entity.qc.enums.OverallResultEnum.PASS THEN 1 ELSE 0 END) "
+            +
+            "FROM QcFormRecordEntity q JOIN q.productInstance pi JOIN pi.product p " +
+            "GROUP BY p.name")
     List<Object[]> getProductPerformanceStats();
 }
