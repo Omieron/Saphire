@@ -63,6 +63,14 @@ const translations = {
             addFromAdmin: 'Add templates from admin panel',
             tapToFill: 'Tap to fill the control form',
         },
+        settings: {
+            title: 'Settings',
+            appearance: 'Appearance',
+            language: 'Application Language',
+            theme: 'Dark Mode',
+            selectLanguage: 'Choose Language',
+            logout: 'Logout',
+        },
         qcEntry: {
             title: 'Quality Control',
             section: 'Section',
@@ -164,6 +172,14 @@ const translations = {
             noTemplates: 'Bu makine için şablon bulunamadı',
             addFromAdmin: 'Admin panelinden şablon ekleyin',
             tapToFill: 'Kontrol formunu doldurmak için dokunun',
+        },
+        settings: {
+            title: 'Ayarlar',
+            appearance: 'Görünüm',
+            language: 'Uygulama Dili',
+            theme: 'Karanlık Mod',
+            selectLanguage: 'Dil Seçin',
+            logout: 'Çıkış Yap',
         },
         qcEntry: {
             title: 'Kalite Kontrol',

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { machineApi, templateApi, taskAssignmentApi } from '../../api';
-import { Cog, Play, LogOut, Globe, History, X, ClipboardCheck, ArrowRight, Moon, Sun, LayoutList, Calendar } from 'lucide-react';
+import { Cog, History, X, ClipboardCheck, ArrowRight, LayoutList, Calendar, Play } from 'lucide-react';
 
 interface Machine {
     id: number;
@@ -30,9 +29,8 @@ interface Task {
 }
 
 export default function Dashboard() {
-    const { t, language, setLanguage } = useLanguage();
-    const { isDark, setTheme } = useTheme();
-    const { user, logout } = useAuth();
+    const { t } = useLanguage();
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     const [machines, setMachines] = useState<Machine[]>([]);
@@ -89,11 +87,6 @@ export default function Dashboard() {
         return templates.filter(t => t.machineId === machineId);
     };
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
-
     const closeTemplateModal = () => {
         setShowTemplateModal(false);
     };
@@ -127,24 +120,11 @@ export default function Dashboard() {
                             <History size={22} />
                         </button>
                         <button
-                            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                            onClick={() => navigate('/settings')}
                             className="p-3 bg-white/20 rounded-xl hover:bg-white/30 transition-colors"
-                            title={isDark ? t.theme.light : t.theme.dark}
+                            title={t.settings.title}
                         >
-                            {isDark ? <Sun size={22} /> : <Moon size={22} />}
-                        </button>
-                        <button
-                            onClick={() => setLanguage(language === 'en' ? 'tr' : 'en')}
-                            className="p-3 bg-white/20 rounded-xl hover:bg-white/30 transition-colors"
-                            title={language === 'en' ? 'Türkçe' : 'English'}
-                        >
-                            <Globe size={22} />
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            className="p-3 bg-white/20 rounded-xl hover:bg-white/30 transition-colors"
-                        >
-                            <LogOut size={22} />
+                            <Cog size={22} />
                         </button>
                     </div>
                 </div>
@@ -294,7 +274,7 @@ export default function Dashboard() {
 
                             {machineTemplates.length > 0 ? (
                                 <div className="space-y-4">
-                                    {machineTemplates.map((template, index) => {
+                                    {machineTemplates.map((template: Template, index: number) => {
                                         const colorScheme = templateColors[index % templateColors.length];
 
                                         return (
