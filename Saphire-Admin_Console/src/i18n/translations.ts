@@ -174,14 +174,20 @@ export const translations = {
         },
         // Machines
         machines: {
-            title: 'Machines',
-            addMachine: 'Add Machine',
-            editMachine: 'Edit Machine',
-            searchMachines: 'Search machines...',
-            noMachines: 'No machines found',
-            location: 'Location',
-            type: 'Type',
-            maintenance: 'Maintenance',
+            title: 'Dashboard',
+            activeTasks: 'My Tasks',
+            allMachines: 'Machines',
+            noActiveTasks: 'No tasks for now',
+            noMachines: 'No assigned machines found',
+            startTask: 'Start QC',
+            startsIn: 'Starts in',
+            remaining: 'Remaining',
+            ended: 'Time Ended',
+            categories: {
+                tasks: 'My Tasks',
+                reportIssue: 'Report Issue',
+                production: 'Production Status'
+            },
             maintenanceMode: 'Maintenance Mode',
             allLocations: 'All Locations',
         },
@@ -620,15 +626,20 @@ export const translations = {
         },
         // Machines
         machines: {
-            title: 'Makineler',
-            addMachine: 'Makine Ekle',
-            editMachine: 'Makine Düzenle',
-            searchMachines: 'Makine ara...',
-            noMachines: 'Makine bulunamadı',
-            location: 'Lokasyon',
-            type: 'Tip',
-            maintenance: 'Bakım',
-            maintenanceMode: 'Bakım Modu',
+            title: 'Panel',
+            activeTasks: 'Görevlerim',
+            allMachines: 'Makineler',
+            noActiveTasks: 'Şu an görev yok',
+            noMachines: 'Atanmış makine bulunamadı',
+            startTask: 'Kalite Kontrol Başlat',
+            startsIn: 'Başlama süresi',
+            remaining: 'Kalan süre',
+            ended: 'Süre Doldu',
+            categories: {
+                tasks: 'Görevlerim',
+                reportIssue: 'Sorun / Arıza Bildir',
+                production: 'Üretim Durumu'
+            },
             allLocations: 'Tüm Lokasyonlar',
         },
         // Products

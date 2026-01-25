@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useBlocker } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Shield, Eye, User as UserIcon, Mail, Key } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Shield, Eye, User as UserIcon, Mail, Key, Cpu, ChevronDown, Info } from 'lucide-react';
 import { userApi } from '../../api/user.api';
+import { machineApi } from '../../api/machine.api';
 import type { UserRequest } from '../../api/user.api';
 import type { User } from '../../api/auth.api';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -34,6 +35,8 @@ export default function Users() {
     const [saving, setSaving] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [showInactive, setShowInactive] = useState(false);
+    const [machines, setMachines] = useState<any[]>([]);
+    const [selectedMachineIds, setSelectedMachineIds] = useState<number[]>([]);
 
     // Delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -63,10 +66,14 @@ export default function Users() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const response = await userApi.getAll(debouncedSearch);
-            setUsers(response.data.data || []);
+            const [userRes, machinesRes] = await Promise.all([
+                userApi.getAll(debouncedSearch),
+                machineApi.getAll()
+            ]);
+            setUsers(userRes.data.data || []);
+            setMachines(machinesRes.data.data || []);
         } catch (error: any) {
-            console.error('Failed to fetch users:', error);
+            console.error('Failed to fetch data:', error);
             const errMsg = error.response?.data?.message || error.message;
             setToast({ show: true, message: `Hata: ${errMsg}`, type: 'error' });
         } finally {
@@ -78,11 +85,17 @@ export default function Users() {
         fetchData();
     }, [debouncedSearch]);
 
-    const handleAdd = () => { setEditItem(null); setFormData({ username: '', password: '', email: '', fullName: '', role: 'OPERATOR', active: true }); setShowForm(true); };
+    const handleAdd = () => {
+        setEditItem(null);
+        setFormData({ username: '', password: '', email: '', fullName: '', role: 'OPERATOR', active: true, machineIds: [] });
+        setSelectedMachineIds([]);
+        setShowForm(true);
+    };
 
     const handleEdit = (item: User) => {
         setEditItem(item);
-        setFormData({ username: item.username, password: '', email: item.email, fullName: item.fullName, role: item.role, active: item.active });
+        setFormData({ username: item.username, password: '', email: item.email, fullName: item.fullName, role: item.role, active: item.active, machineIds: item.machineIds || [] });
+        setSelectedMachineIds(item.machineIds || []);
         setShowForm(true);
     };
 
@@ -115,7 +128,7 @@ export default function Users() {
         setShowSaveConfirm(false);
         setSaving(true);
         try {
-            const dataToSend: any = { ...formData };
+            const dataToSend: any = { ...formData, machineIds: selectedMachineIds };
             if (editItem && !dataToSend.password) { delete dataToSend.password; }
             if (editItem) { await userApi.update(editItem.id, dataToSend); }
             else { await userApi.create(dataToSend); }
@@ -346,6 +359,66 @@ export default function Users() {
                                             onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                                             className="toggle"
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t border-[var(--color-border)]">
+                                    <label className="text-sm font-bold text-[var(--color-text-secondary)] ml-1 flex items-center gap-2">
+                                        <Cpu size={14} className="text-teal-500" /> Atanan Makineler (Sadece Operatörler için)
+                                    </label>
+
+                                    <div className="relative group/select">
+                                        <select
+                                            value=""
+                                            onChange={(e) => {
+                                                const val = Number(e.target.value);
+                                                if (val && !selectedMachineIds.includes(val)) {
+                                                    setSelectedMachineIds(prev => [...prev, val]);
+                                                }
+                                                e.target.value = "";
+                                            }}
+                                            className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 font-bold h-[52px] appearance-none cursor-pointer hover:border-teal-500/30 transition-all outline-none text-sm text-[var(--color-text)] shadow-sm"
+                                        >
+                                            <option value="" disabled className="bg-[var(--color-surface)]">Makine Seç...</option>
+                                            {machines
+                                                .filter(m => !selectedMachineIds.includes(m.id))
+                                                .map(m => (
+                                                    <option key={m.id} value={m.id} className="bg-[var(--color-surface)] text-[var(--color-text)] py-2">
+                                                        {m.name} ({m.code})
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none group-hover/select:text-teal-500 transition-colors">
+                                            <ChevronDown size={18} />
+                                        </div>
+                                    </div>
+
+                                    {/* Selected Machines Tags */}
+                                    <div className="flex flex-wrap gap-2 min-h-[40px] p-1">
+                                        {selectedMachineIds.length === 0 ? (
+                                            <p className="text-[10px] text-[var(--color-text-secondary)] italic uppercase tracking-wider ml-1 opacity-50 flex items-center gap-2">
+                                                <Info size={12} /> Seçili makine yok
+                                            </p>
+                                        ) : (
+                                            selectedMachineIds.map(id => {
+                                                const machine = machines.find(m => m.id === id);
+                                                if (!machine) return null;
+                                                return (
+                                                    <div key={id} className="group/tag flex items-center gap-2 px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 rounded-xl hover:bg-teal-500 hover:text-white transition-all duration-300 animate-in zoom-in-95 shadow-sm">
+                                                        <Cpu size={14} />
+                                                        <span className="text-xs font-bold whitespace-nowrap">{machine.name}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedMachineIds(prev => prev.filter(mid => mid !== id))}
+                                                            className="p-1 hover:bg-black/10 rounded-lg transition-colors"
+                                                        >
+                                                            <XCircle size={14} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
                                     </div>
                                 </div>
                             </div>

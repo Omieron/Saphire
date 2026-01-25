@@ -8,6 +8,7 @@ export interface UserRequest {
     fullName: string;
     role: string;
     active?: boolean;
+    machineIds?: number[];
 }
 
 export const userApi = {

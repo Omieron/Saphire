@@ -59,6 +59,11 @@ const translations = {
             startsIn: 'Starts in',
             ended: 'Time Ended',
             expired: 'Expired',
+            categories: {
+                tasks: 'My Tasks',
+                reportIssue: 'Report Issue',
+                production: 'Production Status'
+            }
         },
         templateModal: {
             title: 'Start QC Control',
@@ -179,6 +184,11 @@ const translations = {
             startsIn: 'Başlama Süresi',
             ended: 'Süre Bitti',
             expired: 'Süresi Dolmuş',
+            categories: {
+                tasks: 'Görevlerim',
+                reportIssue: 'Sorun / Arıza Bildir',
+                production: 'Üretim Durumu'
+            }
         },
         templateModal: {
             title: 'Kalite Kontrolü Başlat',

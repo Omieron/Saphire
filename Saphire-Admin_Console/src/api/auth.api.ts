@@ -20,6 +20,8 @@ export interface User {
     fullName: string;
     role: string;
     active: boolean;
+    machineIds?: number[];
+    machineNames?: string;
 }
 
 export interface LoginResponse {

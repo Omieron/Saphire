@@ -2,12 +2,15 @@ package com.crownbyte.Saphire.entity.master;
 
 import com.crownbyte.Saphire.entity.base.BaseEntity;
 import com.crownbyte.Saphire.entity.master.enums.UserRoleEnum;
+import com.crownbyte.Saphire.entity.master.MachineEntity;
 import com.crownbyte.Saphire.entity.production.ProductionStepEntity;
 import com.crownbyte.Saphire.entity.qc.QcFormRecordEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -52,4 +55,13 @@ public class UserEntity extends BaseEntity {
     @OneToMany(mappedBy = "approvedBy")
     @Builder.Default
     private List<QcFormRecordEntity> approvedRecords = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "user_machines",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "machine_id")
+    )
+    @Builder.Default
+    private Set<MachineEntity> machines = new HashSet<>();
 }

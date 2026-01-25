@@ -12,7 +12,8 @@ import {
     Cog,
     LogOut,
     Clock,
-    LayoutList
+    LayoutList,
+    Info
 } from 'lucide-react';
 import Header from '../../components/Header';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -70,8 +71,16 @@ export default function Dashboard() {
                 taskAssignmentApi.getActiveTasks(user.id),
                 machineApi.getAll()
             ]);
+            let fetchedMachines = machinesRes.data.data || [];
+
+            // Filter machines if user has specific assignments
+            if (user.machineIds && user.machineIds.length > 0) {
+                const assignedIds = user.machineIds;
+                fetchedMachines = fetchedMachines.filter((m: any) => assignedIds.includes(m.id));
+            }
+
             setTasks(tasksRes.data.data || []);
-            setMachines(machinesRes.data.data || []);
+            setMachines(fetchedMachines);
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
         } finally {
@@ -138,9 +147,9 @@ export default function Dashboard() {
     };
 
     const categories = [
-        { id: 0, name: t.dashboard.activeTasks },
-        { id: 1, name: 'Hattaki Ürünler' },
-        { id: 2, name: 'Bekleyen Bakımlar' }
+        { id: 0, name: t.dashboard.categories?.tasks || t.dashboard.activeTasks },
+        { id: 1, name: t.dashboard.categories?.reportIssue || 'Sorun Bildir' },
+        { id: 2, name: t.dashboard.categories?.production || 'Üretim Durumu' }
     ];
 
     return (
@@ -279,68 +288,116 @@ export default function Dashboard() {
                         })()}
                     </div>
 
-                    {/* All Machines Section */}
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-3">
-                            <Cpu className="text-[var(--color-primary)]" size={24} />
-                            <h2 className="text-2xl font-black text-[var(--color-text)] uppercase tracking-tight">{t.dashboard.allMachines}</h2>
+                    {/* Assigned Machines Section */}
+                    <div className="space-y-8">
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-3">
+                                <Cpu className="text-[var(--color-primary)]" size={24} />
+                                <h2 className="text-2xl font-black text-[var(--color-text)] uppercase tracking-tight">
+                                    {user?.machineIds && user.machineIds.length > 0
+                                        ? 'Sorumlu Olduğum Makineler'
+                                        : 'Tüm Makineler'}
+                                </h2>
+                            </div>
+                            <p className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-[0.3em] ml-9 opacity-60">
+                                Vardiya Yönetimi & Makine Durumları
+                            </p>
                         </div>
 
-                        {/* Categories Filter */}
-                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        {/* Premium Glassmorphic Category Switcher */}
+                        <div className="p-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex gap-1 shadow-inner relative overflow-hidden group/switcher">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-teal-500/5 to-transparent -mr-16 -mt-16 rounded-full blur-2xl" />
                             {categories.map((cat) => (
                                 <button
                                     key={cat.id}
                                     onClick={() => setSelectedCategory(cat.id)}
-                                    className={`px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border-2 ${selectedCategory === cat.id
-                                        ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-500/20'
-                                        : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-teal-500/50'
+                                    className={`relative flex-1 py-3.5 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 z-10 ${selectedCategory === cat.id
+                                        ? 'text-white'
+                                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]/50'
                                         }`}
                                 >
-                                    {cat.name}
+                                    {selectedCategory === cat.id && (
+                                        <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-emerald-500 rounded-xl shadow-lg shadow-teal-500/30 animate-in fade-in zoom-in-95 duration-300 -z-10" />
+                                    )}
+                                    <span className="relative">{cat.name}</span>
                                 </button>
                             ))}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-                            {loading ? (
-                                [1, 2, 3].map(i => (
-                                    <div key={i} className="h-40 bg-[var(--color-surface)] rounded-3xl animate-pulse border border-[var(--color-border)] opacity-50" />
-                                ))
-                            ) : machines.length === 0 ? (
-                                <div className="col-span-full py-20 text-center">
-                                    <p className="text-[var(--color-text-secondary)] font-bold">{t.dashboard.noMachines}</p>
+                            {selectedCategory === 0 ? (
+                                loading ? (
+                                    [1, 2, 3].map(i => (
+                                        <div key={i} className="h-40 bg-[var(--color-surface)] rounded-3xl animate-pulse border border-[var(--color-border)] opacity-50" />
+                                    ))
+                                ) : machines.length === 0 ? (
+                                    <div className="col-span-full py-20 text-center">
+                                        <p className="text-[var(--color-text-secondary)] font-bold">{t.dashboard.noMachines}</p>
+                                    </div>
+                                ) : (
+                                    machines.map((machine) => (
+                                        <div
+                                            key={machine.id}
+                                            onClick={() => handleTaskClick(machine as any)}
+                                            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 admin-card cursor-pointer group active:scale-[0.98] transition-all"
+                                        >
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className="w-14 h-14 bg-[var(--color-primary-soft)] rounded-2xl flex items-center justify-center text-[var(--color-primary)] group-hover:scale-110 transition-transform">
+                                                    <Cpu size={32} />
+                                                </div>
+                                                {machine.status === 'ACTIVE' && (
+                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-[var(--color-success-soft)] text-[var(--color-success)] rounded-full text-[10px] font-black uppercase tracking-widest border border-[var(--color-success-soft)]">
+                                                        <div className="w-1.5 h-1.5 bg-[var(--color-success)] rounded-full animate-pulse" />
+                                                        Online
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-xl font-black text-[var(--color-text)] mb-1 uppercase tracking-tighter">{machine.name}</h3>
+                                                <p className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-[0.2em]">{machine.code}</p>
+                                            </div>
+
+                                            <div className="mt-8 pt-6 border-t border-[var(--color-border)] flex items-center justify-between text-[var(--color-primary)]">
+                                                <span className="text-[10px] font-black uppercase tracking-widest">{t.dashboard.startQc}</span>
+                                                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                            </div>
+                                        </div>
+                                    ))
+                                )
+                            ) : selectedCategory === 1 ? (
+                                <div className="col-span-full flex flex-col items-center justify-center py-20 text-center bg-[var(--color-surface)] border border-dashed border-[var(--color-border)] rounded-[32px] space-y-6">
+                                    <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-500">
+                                        <Info size={40} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-black text-[var(--color-text)] uppercase tracking-tight">Sorun / Arıza Bildirimi</h3>
+                                        <p className="text-sm text-[var(--color-text-secondary)] max-w-xs mx-auto">Makinelerde oluşan her türlü teknik aksaklığı buradan hızla ilgili birime iletebilirsiniz.</p>
+                                    </div>
+                                    <button className="px-8 py-4 bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-500/20 active:scale-95 transition-all">
+                                        Yeni Bildirim Oluştur
+                                    </button>
                                 </div>
                             ) : (
-                                machines.map((machine) => (
-                                    <div
-                                        key={machine.id}
-                                        onClick={() => handleTaskClick(machine as any)}
-                                        className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-6 admin-card cursor-pointer group active:scale-[0.98] transition-all"
-                                    >
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div className="w-14 h-14 bg-[var(--color-primary-soft)] rounded-2xl flex items-center justify-center text-[var(--color-primary)] group-hover:scale-110 transition-transform">
-                                                <Cpu size={32} />
-                                            </div>
-                                            {machine.status === 'ACTIVE' && (
-                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-[var(--color-success-soft)] text-[var(--color-success)] rounded-full text-[10px] font-black uppercase tracking-widest border border-[var(--color-success-soft)]">
-                                                    <div className="w-1.5 h-1.5 bg-[var(--color-success)] rounded-full animate-pulse" />
-                                                    Online
-                                                </div>
-                                            )}
+                                <div className="col-span-full flex flex-col items-center justify-center py-20 text-center bg-[var(--color-surface)] border border-dashed border-[var(--color-border)] rounded-[32px] space-y-6">
+                                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center text-teal-500">
+                                        <History size={40} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-black text-[var(--color-text)] uppercase tracking-tight">Üretim Durumu</h3>
+                                        <p className="text-sm text-[var(--color-text-secondary)] max-w-xs mx-auto">Anlık üretim hedefleri, basılan numune sayıları ve verimlilik verilerini takip edin.</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 w-full max-w-sm px-4">
+                                        <div className="bg-[var(--color-bg)] p-4 rounded-2xl border border-[var(--color-border)]">
+                                            <div className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase">Hedef</div>
+                                            <div className="text-xl font-black text-[var(--color-primary)]">1.200</div>
                                         </div>
-
-                                        <div>
-                                            <h3 className="text-xl font-black text-[var(--color-text)] mb-1 uppercase tracking-tighter">{machine.name}</h3>
-                                            <p className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-[0.2em]">{machine.code}</p>
-                                        </div>
-
-                                        <div className="mt-8 pt-6 border-t border-[var(--color-border)] flex items-center justify-between text-[var(--color-primary)]">
-                                            <span className="text-[10px] font-black uppercase tracking-widest">{t.dashboard.startQc}</span>
-                                            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                        <div className="bg-[var(--color-bg)] p-4 rounded-2xl border border-[var(--color-border)]">
+                                            <div className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase">Gerçekleşen</div>
+                                            <div className="text-xl font-black text-[var(--color-success)]">842</div>
                                         </div>
                                     </div>
-                                ))
+                                </div>
                             )}
                         </div>
                     </div>

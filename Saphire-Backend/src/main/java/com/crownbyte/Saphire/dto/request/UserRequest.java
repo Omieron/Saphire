@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import java.util.List;
 
 @Getter
 @Setter
@@ -28,4 +29,6 @@ public class UserRequest {
     private String role;
 
     private Boolean active;
+
+    private List<Long> machineIds;
 }

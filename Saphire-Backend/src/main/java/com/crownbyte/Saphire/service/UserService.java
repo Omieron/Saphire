@@ -2,8 +2,10 @@ package com.crownbyte.Saphire.service;
 
 import com.crownbyte.Saphire.dto.request.UserRequest;
 import com.crownbyte.Saphire.dto.response.UserResponse;
+import com.crownbyte.Saphire.entity.master.MachineEntity;
 import com.crownbyte.Saphire.entity.master.UserEntity;
 import com.crownbyte.Saphire.entity.master.enums.UserRoleEnum;
+import com.crownbyte.Saphire.repository.MachineRepository;
 import com.crownbyte.Saphire.repository.UserRepository;
 import com.crownbyte.Saphire.service.impl.UserServiceImpl;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class UserService implements UserServiceImpl {
 
     private final UserRepository userRepository;
+    private final MachineRepository machineRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -83,6 +86,14 @@ public class UserService implements UserServiceImpl {
                 .active(request.getActive() != null ? request.getActive() : true)
                 .build();
 
+        if (request.getMachineIds() != null && !request.getMachineIds().isEmpty()) {
+            List<MachineEntity> machines = machineRepository.findAllById(request.getMachineIds());
+            if (machines.size() != request.getMachineIds().size()) {
+                throw new EntityNotFoundException("Some machines were not found");
+            }
+            entity.getMachines().addAll(machines);
+        }
+
         UserEntity saved = userRepository.save(entity);
         return toResponse(saved);
     }
@@ -106,6 +117,15 @@ public class UserService implements UserServiceImpl {
 
         if (request.getActive() != null) {
             entity.setActive(request.getActive());
+        }
+
+        if (request.getMachineIds() != null) {
+            List<MachineEntity> machines = machineRepository.findAllById(request.getMachineIds());
+            if (machines.size() != request.getMachineIds().size()) {
+                throw new EntityNotFoundException("Some machines were not found");
+            }
+            entity.getMachines().clear();
+            entity.getMachines().addAll(machines);
         }
 
         UserEntity saved = userRepository.save(entity);
@@ -140,6 +160,8 @@ public class UserService implements UserServiceImpl {
                 .fullName(entity.getFullName())
                 .role(entity.getRole().name())
                 .active(entity.getActive())
+                .machineIds(entity.getMachines().stream().map(MachineEntity::getId).collect(Collectors.toList()))
+                .machineNames(entity.getMachines().stream().map(MachineEntity::getName).collect(Collectors.joining(", ")))
                 .build();
     }
 }

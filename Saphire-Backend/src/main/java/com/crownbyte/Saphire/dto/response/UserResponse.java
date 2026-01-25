@@ -1,6 +1,7 @@
 package com.crownbyte.Saphire.dto.response;
 
 import lombok.*;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,4 +15,6 @@ public class UserResponse {
     private String fullName;
     private String role;
     private Boolean active;
+    private List<Long> machineIds;
+    private String machineNames;
 }
