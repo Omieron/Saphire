@@ -61,7 +61,7 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
     @Override
     @Transactional(readOnly = true)
     public List<QcFormTemplateResponse> getByMachineId(Long machineId) {
-        return templateRepository.findByMachineId(machineId)
+        return templateRepository.findByMachinesId(machineId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -125,11 +125,12 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
             entity.setCompany(company);
         }
 
-        if (request.getMachineId() != null) {
-            MachineEntity machine = machineRepository.findById(request.getMachineId())
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Machine not found with id: " + request.getMachineId()));
-            entity.setMachine(machine);
+        if (request.getMachineIds() != null && !request.getMachineIds().isEmpty()) {
+            List<MachineEntity> machines = machineRepository.findAllById(request.getMachineIds());
+            if (machines.size() != request.getMachineIds().size()) {
+                throw new EntityNotFoundException("Some machines were not found");
+            }
+            entity.getMachines().addAll(machines);
         }
 
         if (request.getProductId() != null) {
@@ -238,11 +239,13 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
             entity.setCompany(company);
         }
 
-        if (request.getMachineId() != null) {
-            MachineEntity machine = machineRepository.findById(request.getMachineId())
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Machine not found with id: " + request.getMachineId()));
-            entity.setMachine(machine);
+        if (request.getMachineIds() != null) {
+            List<MachineEntity> machines = machineRepository.findAllById(request.getMachineIds());
+            if (machines.size() != request.getMachineIds().size()) {
+                throw new EntityNotFoundException("Some machines were not found");
+            }
+            entity.getMachines().clear();
+            entity.getMachines().addAll(machines);
         }
 
         if (request.getProductId() != null) {
@@ -444,8 +447,9 @@ public class QcFormTemplateService implements QcFormTemplateServiceImpl {
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .contextType(entity.getContextType().name())
-                .machineId(entity.getMachine() != null ? entity.getMachine().getId() : null)
-                .machineName(entity.getMachine() != null ? entity.getMachine().getName() : null)
+                .machineIds(entity.getMachines().stream().map(MachineEntity::getId).collect(Collectors.toList()))
+                .machineNames(entity.getMachines().stream().map(MachineEntity::getName).collect(Collectors.joining(", ")))
+                .machineCodes(entity.getMachines().stream().map(MachineEntity::getCode).collect(Collectors.joining(", ")))
                 .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
                 .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
                 .scheduleType(entity.getScheduleType().name())

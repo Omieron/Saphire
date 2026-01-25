@@ -58,7 +58,7 @@ public class MachineEntity extends BaseEntity {
     @Builder.Default
     private List<ProductionStepEntity> productionSteps = new ArrayList<>();
 
-    @OneToMany(mappedBy = "machine")
+    @ManyToMany(mappedBy = "machines")
     @Builder.Default
     private List<QcFormTemplateEntity> formTemplates = new ArrayList<>();
 

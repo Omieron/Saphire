@@ -27,7 +27,7 @@ public class QcFormTemplateRequest {
     @NotNull(message = "Context type is required")
     private String contextType;
 
-    private Long machineId;
+    private List<Long> machineIds;
 
     private Long productId;
 

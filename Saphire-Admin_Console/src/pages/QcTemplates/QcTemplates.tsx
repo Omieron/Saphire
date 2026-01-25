@@ -77,7 +77,7 @@ export default function QcTemplates() {
     const [editingTemplate, setEditingTemplate] = useState<QcFormTemplate | null>(null);
     const [contextType, setContextType] = useState('PRODUCT');
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-    const [selectedMachineId, setSelectedMachineId] = useState<number | null>(null);
+    const [selectedMachineIds, setSelectedMachineIds] = useState<number[]>([]);
     const [templateCode, setTemplateCode] = useState('');
     const [templateName, setTemplateName] = useState('');
     const [templateDescription, setTemplateDescription] = useState('');
@@ -145,7 +145,7 @@ export default function QcTemplates() {
         setEditingTemplate(null);
         setContextType('PRODUCT');
         setSelectedProductId(null);
-        setSelectedMachineId(null);
+        setSelectedMachineIds([]);
         setTemplateCode('');
         setTemplateName('');
         setTemplateDescription('');
@@ -159,7 +159,7 @@ export default function QcTemplates() {
         setEditingTemplate(template);
         setContextType(template.contextType);
         setSelectedProductId(template.productId);
-        setSelectedMachineId(template.machineId);
+        setSelectedMachineIds(template.machineIds || []);
         setTemplateCode(template.code);
         setTemplateName(template.name);
         setTemplateDescription(template.description || '');
@@ -281,7 +281,7 @@ export default function QcTemplates() {
                 description: templateDescription || undefined,
                 contextType,
                 productId: contextType === 'PRODUCT' && selectedProductId ? selectedProductId : undefined,
-                machineId: contextType === 'MACHINE' && selectedMachineId ? selectedMachineId : undefined,
+                machineIds: contextType === 'MACHINE' ? selectedMachineIds : [],
                 requiresApproval,
                 allowPartialSave,
                 active: true,
@@ -365,7 +365,7 @@ export default function QcTemplates() {
                                                     {template.contextType === 'PRODUCT' ? (
                                                         <span className="inline-flex items-center gap-1.5"><Package size={14} className="text-blue-500" /> {template.productName || '-'}</span>
                                                     ) : template.contextType === 'MACHINE' ? (
-                                                        <span className="inline-flex items-center gap-1.5"><Cpu size={14} className="text-teal-500" /> {template.machineName || '-'}</span>
+                                                        <span className="inline-flex items-center gap-1.5" title={template.machineNames || ''}><Cpu size={14} className="text-teal-500" /> {template.machineNames || '-'}</span>
                                                     ) : <span className="italic opacity-50">General</span>}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm font-bold text-teal-600">
@@ -470,11 +470,84 @@ export default function QcTemplates() {
                                     {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
                                 </select>
                             ) : (
-                                <select value={selectedMachineId || ''} onChange={(e) => setSelectedMachineId(e.target.value ? Number(e.target.value) : null)}
-                                    className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 font-bold h-[52px]">
-                                    <option value="">{t.qcTemplates.selectMachine}</option>
-                                    {machines.map(m => <option key={m.id} value={m.id}>{m.name} ({m.code})</option>)}
-                                </select>
+                                <div className="space-y-3">
+                                    {/* Dropdown for Selection */}
+                                    <div className="relative group/select">
+                                        <select
+                                            value=""
+                                            onChange={(e) => {
+                                                const val = Number(e.target.value);
+                                                if (val && !selectedMachineIds.includes(val)) {
+                                                    setSelectedMachineIds(prev => [...prev, val]);
+                                                }
+                                                e.target.value = ""; // Reset dropdown
+                                            }}
+                                            className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 font-bold h-[52px] appearance-none cursor-pointer hover:border-teal-500/30 transition-all outline-none text-sm text-[var(--color-text)] shadow-sm"
+                                        >
+                                            <option value="" disabled className="bg-[var(--color-surface)]">{t.qcTemplates.selectMachine}</option>
+                                            {machines
+                                                .filter(m => !selectedMachineIds.includes(m.id))
+                                                .map(m => (
+                                                    <option key={m.id} value={m.id} className="bg-[var(--color-surface)] text-[var(--color-text)] py-2">
+                                                        {m.name} ({m.code})
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none group-hover/select:text-teal-500 transition-colors">
+                                            <ChevronDown size={18} />
+                                        </div>
+                                    </div>
+
+                                    {/* Selected Items (Cards/Tags) */}
+                                    <div className="flex flex-wrap gap-2 min-h-[40px] p-1">
+                                        {selectedMachineIds.length === 0 ? (
+                                            <p className="text-[10px] text-[var(--color-text-secondary)] italic uppercase tracking-wider ml-1 opacity-50 flex items-center gap-2">
+                                                <Info size={12} /> {t.qcTemplates.noMachinesSelected || 'No machines selected'}
+                                            </p>
+                                        ) : (
+                                            selectedMachineIds.map(id => {
+                                                const machine = machines.find(m => m.id === id);
+                                                if (!machine) return null;
+                                                return (
+                                                    <div key={id} className="group/tag flex items-center gap-2 px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 rounded-xl hover:bg-teal-500 hover:text-white transition-all duration-300 animate-in zoom-in-95 shadow-sm hover:shadow-md hover:shadow-teal-500/20">
+                                                        <Cpu size={14} className="group-hover/tag:animate-pulse" />
+                                                        <span className="text-xs font-bold whitespace-nowrap">{machine.name}</span>
+                                                        <button
+                                                            onClick={() => setSelectedMachineIds(prev => prev.filter(mid => mid !== id))}
+                                                            className="p-1 hover:bg-black/10 rounded-lg transition-colors"
+                                                        >
+                                                            <XCircle size={14} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1 border-t border-[var(--color-border)]">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedMachineIds(machines.map(m => m.id))}
+                                                className="text-[10px] font-black text-teal-600 uppercase tracking-widest hover:text-teal-700 transition-colors flex items-center gap-1.5"
+                                            >
+                                                <CheckCircle size={12} /> {t.common.selectAll}
+                                            </button>
+                                            <div className="w-1 h-1 bg-[var(--color-border)] rounded-full" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedMachineIds([])}
+                                                className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors flex items-center gap-1.5"
+                                            >
+                                                <XCircle size={12} /> {t.common.clearAll}
+                                            </button>
+                                        </div>
+                                        <div className="text-[10px] font-bold text-[var(--color-text-secondary)] uppercase tracking-tighter">
+                                            {selectedMachineIds.length} / {machines.length} Selected
+                                        </div>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -594,7 +667,9 @@ export default function QcTemplates() {
                                             {contextType === 'PRODUCT'
                                                 ? (products.find(p => p.id === selectedProductId)?.name || 'NO PRODUCT')
                                                 : contextType === 'MACHINE'
-                                                    ? (machines.find(m => m.id === selectedMachineId)?.name || 'NO MACHINE')
+                                                    ? (selectedMachineIds.length > 0
+                                                        ? selectedMachineIds.map(id => machines.find(m => m.id === id)?.name).filter(n => n).join(', ')
+                                                        : 'NO MACHINE')
                                                     : 'GENERAL'
                                             }
                                         </span>

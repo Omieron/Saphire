@@ -18,8 +18,9 @@ public class QcFormTemplateResponse {
     private String name;
     private String description;
     private String contextType;
-    private Long machineId;
-    private String machineName;
+    private List<Long> machineIds;
+    private String machineNames;
+    private String machineCodes;
     private Long productId;
     private String productName;
     private String scheduleType;

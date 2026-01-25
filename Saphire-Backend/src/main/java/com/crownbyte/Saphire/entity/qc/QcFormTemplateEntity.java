@@ -44,9 +44,14 @@ public class QcFormTemplateEntity extends BaseEntity {
     @Column(name = "context_type", nullable = false)
     private ContextTypeEnum contextType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "machine_id")
-    private MachineEntity machine;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "qc_template_machines",
+        joinColumns = @JoinColumn(name = "qc_template_id"),
+        inverseJoinColumns = @JoinColumn(name = "machine_id")
+    )
+    @Builder.Default
+    private java.util.Set<MachineEntity> machines = new java.util.HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")

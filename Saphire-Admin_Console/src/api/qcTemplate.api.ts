@@ -39,8 +39,9 @@ export interface QcFormTemplate {
     allowPartialSave: boolean;
     companyId: number | null;
     companyName: string | null;
-    machineId: number | null;
-    machineName: string | null;
+    machineIds: number[];
+    machineNames: string | null;
+    machineCodes: string | null;
     productId: number | null;
     productName: string | null;
     sections: QcFormSection[];
@@ -89,7 +90,7 @@ export interface QcFormTemplateRequest {
     requiresApproval?: boolean;
     allowPartialSave?: boolean;
     companyId?: number;
-    machineId?: number;
+    machineIds?: number[];
     productId?: number;
     headerFields?: object[];
     sections?: QcFormSectionRequest[];

@@ -19,7 +19,7 @@ public interface QcFormTemplateRepository extends JpaRepository<QcFormTemplateEn
 
     List<QcFormTemplateEntity> findByCompanyId(Long companyId);
 
-    List<QcFormTemplateEntity> findByMachineId(Long machineId);
+    List<QcFormTemplateEntity> findByMachinesId(Long machineId);
 
     List<QcFormTemplateEntity> findByProductId(Long productId);
 
