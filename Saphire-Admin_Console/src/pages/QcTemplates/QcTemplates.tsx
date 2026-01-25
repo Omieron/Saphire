@@ -741,17 +741,17 @@ export default function QcTemplates() {
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-black text-[var(--color-text-secondary)] uppercase">Target</label>
                                         <input type="text" value={fieldForm.targetValue} onChange={(e) => setFieldForm({ ...fieldForm, targetValue: e.target.value })} placeholder="52"
-                                            className="w-full px-3 py-2 bg-white border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 text-center font-bold text-xs" />
+                                            className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 text-center font-bold text-xs text-[var(--color-text)]" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-black text-[var(--color-text-secondary)] uppercase">Min</label>
                                         <input type="text" value={fieldForm.minValue} onChange={(e) => setFieldForm({ ...fieldForm, minValue: e.target.value })} placeholder="50"
-                                            className="w-full px-3 py-2 bg-white border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 text-center font-bold text-xs" />
+                                            className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 text-center font-bold text-xs text-[var(--color-text)]" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-black text-[var(--color-text-secondary)] uppercase">Max</label>
                                         <input type="text" value={fieldForm.maxValue} onChange={(e) => setFieldForm({ ...fieldForm, maxValue: e.target.value })} placeholder="55"
-                                            className="w-full px-3 py-2 bg-white border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 text-center font-bold text-xs" />
+                                            className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-teal-500 text-center font-bold text-xs text-[var(--color-text)]" />
                                     </div>
                                 </div>
                             )}
