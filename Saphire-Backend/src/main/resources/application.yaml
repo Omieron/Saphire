@@ -38,8 +38,14 @@ server:
 
 # JWT Config
 jwt:
-  secret: ${JWT_SECRET:ee5ddc7600da0fc86d4bb16f5b3b4862c47c210bbb9f2c854e9b04cf9cfb6de3}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:28800000}
+
+# Security
+app:
+  security:
+    cors:
+      allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
 
 # Logging
 logging:
