@@ -1,4 +1,4 @@
-package com.crownbyte.Saphire.service;
+package com.crownbyte.Saphire.service.impl;
 
 import com.crownbyte.Saphire.dto.request.QcFormRecordRequest;
 import com.crownbyte.Saphire.dto.response.QcFormRecordResponse;
@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class QcFormRecordServiceTest {
+class QcFormRecordServiceImplTest {
 
     @Mock
     private QcFormRecordRepository recordRepository;
@@ -36,7 +36,7 @@ class QcFormRecordServiceTest {
     private UserRepository userRepository;
 
     @InjectMocks
-    private QcFormRecordService recordService;
+    private QcFormRecordServiceImpl recordService;
 
     private QcFormRecordEntity recordEntity;
     private QcFormTemplateEntity templateEntity;

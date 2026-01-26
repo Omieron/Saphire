@@ -2,24 +2,113 @@ package com.crownbyte.Saphire.service.impl;
 
 import com.crownbyte.Saphire.dto.request.ProductRequest;
 import com.crownbyte.Saphire.dto.response.ProductResponse;
+import com.crownbyte.Saphire.entity.master.ProductEntity;
+import com.crownbyte.Saphire.repository.ProductRepository;
+import com.crownbyte.Saphire.service.ProductService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-public interface ProductServiceImpl {
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ProductServiceImpl implements ProductService {
 
-    List<ProductResponse> getAll(String search);
+    private final ProductRepository productRepository;
 
-    List<ProductResponse> getActive();
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getAll(String search) {
+        List<ProductEntity> products;
+        if (search != null && !search.trim().isEmpty()) {
+            products = productRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(search, search);
+        } else {
+            products = productRepository.findAll();
+        }
+        return products.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
 
-    Optional<ProductResponse> getById(Long id);
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getActive() {
+        return productRepository.findByActiveTrue()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
 
-    Optional<ProductResponse> getByCode(String code);
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ProductResponse> getById(Long id) {
+        return productRepository.findById(id)
+                .map(this::toResponse);
+    }
 
-    ProductResponse create(ProductRequest request);
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ProductResponse> getByCode(String code) {
+        return productRepository.findByCode(code)
+                .map(this::toResponse);
+    }
 
-    ProductResponse update(Long id, ProductRequest request);
+    @Override
+    public ProductResponse create(ProductRequest request) {
+        ProductEntity entity = ProductEntity.builder()
+                .name(request.getName())
+                .code(request.getCode())
+                .description(request.getDescription())
+                .active(request.getActive() != null ? request.getActive() : true)
+                .build();
 
-    void delete(Long id);
+        ProductEntity saved = productRepository.save(entity);
+        return toResponse(saved);
+    }
 
-    boolean existsByCode(String code);
+    @Override
+    public ProductResponse update(Long id, ProductRequest request) {
+        ProductEntity entity = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
+
+        entity.setName(request.getName());
+        entity.setCode(request.getCode());
+        entity.setDescription(request.getDescription());
+        if (request.getActive() != null) {
+            entity.setActive(request.getActive());
+        }
+
+        ProductEntity saved = productRepository.save(entity);
+        return toResponse(saved);
+    }
+
+    @Override
+    public void delete(Long id) {
+        ProductEntity entity = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
+        entity.setActive(false);
+        productRepository.save(entity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByCode(String code) {
+        return productRepository.existsByCode(code);
+    }
+
+    private ProductResponse toResponse(ProductEntity entity) {
+        return ProductResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .code(entity.getCode())
+                .description(entity.getDescription())
+                .active(entity.getActive())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
 }

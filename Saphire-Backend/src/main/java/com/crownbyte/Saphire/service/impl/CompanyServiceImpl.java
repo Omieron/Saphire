@@ -2,22 +2,104 @@ package com.crownbyte.Saphire.service.impl;
 
 import com.crownbyte.Saphire.dto.request.CompanyRequest;
 import com.crownbyte.Saphire.dto.response.CompanyResponse;
+import com.crownbyte.Saphire.entity.master.CompanyEntity;
+import com.crownbyte.Saphire.repository.CompanyRepository;
+import com.crownbyte.Saphire.service.CompanyService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-public interface CompanyServiceImpl {
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class CompanyServiceImpl implements CompanyService {
 
-    List<CompanyResponse> getAll(String search);
+    private final CompanyRepository companyRepository;
 
-    Optional<CompanyResponse> getById(Long id);
+    @Override
+    @Transactional(readOnly = true)
+    public List<CompanyResponse> getAll(String search) {
+        List<CompanyEntity> companies;
+        if (search != null && !search.trim().isEmpty()) {
+            companies = companyRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(search, search);
+        } else {
+            companies = companyRepository.findAll();
+        }
+        return companies.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
 
-    Optional<CompanyResponse> getByCode(String code);
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CompanyResponse> getById(Long id) {
+        return companyRepository.findById(id)
+                .map(this::toResponse);
+    }
 
-    CompanyResponse create(CompanyRequest request);
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CompanyResponse> getByCode(String code) {
+        return companyRepository.findByCode(code)
+                .map(this::toResponse);
+    }
 
-    CompanyResponse update(Long id, CompanyRequest request);
+    @Override
+    public CompanyResponse create(CompanyRequest request) {
+        CompanyEntity entity = CompanyEntity.builder()
+                .name(request.getName())
+                .code(request.getCode())
+                .active(request.getActive() != null ? request.getActive() : true)
+                .logo(request.getLogo())
+                .build();
 
-    void delete(Long id);
+        CompanyEntity saved = companyRepository.save(entity);
+        return toResponse(saved);
+    }
 
-    boolean existsByCode(String code);
+    @Override
+    public CompanyResponse update(Long id, CompanyRequest request) {
+        CompanyEntity entity = companyRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Company not found with id: " + id));
+
+        entity.setName(request.getName());
+        entity.setCode(request.getCode());
+        if (request.getActive() != null) {
+            entity.setActive(request.getActive());
+        }
+        entity.setLogo(request.getLogo());
+
+        CompanyEntity saved = companyRepository.save(entity);
+        return toResponse(saved);
+    }
+
+    @Override
+    public void delete(Long id) {
+        CompanyEntity entity = companyRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Company not found with id: " + id));
+        entity.setActive(false);
+        companyRepository.save(entity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByCode(String code) {
+        return companyRepository.existsByCode(code);
+    }
+
+    private CompanyResponse toResponse(CompanyEntity entity) {
+        return CompanyResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .code(entity.getCode())
+                .active(entity.getActive())
+                .logo(entity.getLogo())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
 }

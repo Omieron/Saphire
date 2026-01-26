@@ -1,4 +1,4 @@
-package com.crownbyte.Saphire.service;
+package com.crownbyte.Saphire.service.impl;
 
 import com.crownbyte.Saphire.dto.request.UserRequest;
 import com.crownbyte.Saphire.dto.response.UserResponse;
@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UserServiceTest {
+class UserServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
@@ -33,7 +33,7 @@ class UserServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private UserService userService;
+    private UserServiceImpl userService;
 
     private UserEntity userEntity;
 

@@ -1,4 +1,4 @@
-package com.crownbyte.Saphire.service;
+package com.crownbyte.Saphire.service.impl;
 
 import com.crownbyte.Saphire.dto.request.QcFormTemplateRequest;
 import com.crownbyte.Saphire.dto.response.QcFormTemplateResponse;
@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class QcFormTemplateServiceTest {
+class QcFormTemplateServiceImplTest {
 
     @Mock
     private QcFormTemplateRepository templateRepository;
@@ -38,7 +38,7 @@ class QcFormTemplateServiceTest {
     private ProductRepository productRepository;
 
     @InjectMocks
-    private QcFormTemplateService templateService;
+    private QcFormTemplateServiceImpl templateService;
 
     private QcFormTemplateEntity templateEntity;
 
