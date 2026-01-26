@@ -11,7 +11,6 @@ import com.crownbyte.Saphire.repository.QcFormRecordRepository;
 import com.crownbyte.Saphire.repository.QcFormTemplateRepository;
 import com.crownbyte.Saphire.repository.TaskAssignmentRepository;
 import com.crownbyte.Saphire.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

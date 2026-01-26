@@ -1,10 +1,8 @@
 package com.crownbyte.Saphire.service;
 
 import com.crownbyte.Saphire.dto.request.QcFormRecordRequest;
-import com.crownbyte.Saphire.dto.request.QcFormValueRequest;
 import com.crownbyte.Saphire.dto.response.QcFormRecordResponse;
 import com.crownbyte.Saphire.entity.master.UserEntity;
-import com.crownbyte.Saphire.entity.qc.QcFormFieldEntity;
 import com.crownbyte.Saphire.entity.qc.QcFormRecordEntity;
 import com.crownbyte.Saphire.entity.qc.QcFormTemplateEntity;
 import com.crownbyte.Saphire.entity.qc.enums.RecordStatusEnum;
@@ -17,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
