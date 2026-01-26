@@ -3,13 +3,14 @@ package com.crownbyte.Saphire.entity.master;
 import com.crownbyte.Saphire.entity.base.BaseEntity;
 import com.crownbyte.Saphire.entity.production.ProductionStepEntity;
 import com.crownbyte.Saphire.entity.qc.QcFormRecordEntity;
-import com.crownbyte.Saphire.entity.qc.QcFormTemplateEntity;
 import com.crownbyte.Saphire.entity.route.RouteStepMachineEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "machines")
@@ -60,7 +61,7 @@ public class MachineEntity extends BaseEntity {
 
     @ManyToMany(mappedBy = "machines")
     @Builder.Default
-    private List<QcFormTemplateEntity> formTemplates = new ArrayList<>();
+    private Set<UserEntity> assignedUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "machine")
     @Builder.Default

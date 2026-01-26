@@ -2,7 +2,6 @@ package com.crownbyte.Saphire.entity.master;
 
 import com.crownbyte.Saphire.entity.base.BaseEntity;
 import com.crownbyte.Saphire.entity.master.enums.UserRoleEnum;
-import com.crownbyte.Saphire.entity.master.MachineEntity;
 import com.crownbyte.Saphire.entity.production.ProductionStepEntity;
 import com.crownbyte.Saphire.entity.qc.QcFormRecordEntity;
 import jakarta.persistence.*;
@@ -57,11 +56,7 @@ public class UserEntity extends BaseEntity {
     private List<QcFormRecordEntity> approvedRecords = new ArrayList<>();
 
     @ManyToMany
-    @JoinTable(
-        name = "user_machines",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "machine_id")
-    )
+    @JoinTable(name = "user_machines", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "machine_id"))
     @Builder.Default
     private Set<MachineEntity> machines = new HashSet<>();
 }

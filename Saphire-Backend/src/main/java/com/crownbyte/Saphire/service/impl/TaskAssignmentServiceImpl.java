@@ -6,7 +6,6 @@ import com.crownbyte.Saphire.dto.response.TaskAssignmentResponse;
 import com.crownbyte.Saphire.dto.response.TaskScheduleResponse;
 import com.crownbyte.Saphire.dto.response.UserResponse;
 import com.crownbyte.Saphire.entity.master.UserEntity;
-import com.crownbyte.Saphire.entity.qc.QcFormRecordEntity;
 import com.crownbyte.Saphire.entity.qc.QcFormTemplateEntity;
 import com.crownbyte.Saphire.entity.qc.TaskAssignmentEntity;
 import com.crownbyte.Saphire.entity.qc.TaskScheduleEntity;
@@ -25,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,9 +57,22 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     @Override
     public TaskAssignmentResponse create(TaskAssignmentRequest request) {
         QcFormTemplateEntity template = templateRepository.findById(request.getTemplateId())
-                .orElseThrow(() -> new EntityNotFoundException("Template not found with id: " + request.getTemplateId()));
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Template not found with id: " + request.getTemplateId()));
 
         List<UserEntity> users = userRepository.findAllById(request.getUserIds());
+
+        // Validate machine authorization if machineId is present
+        if (request.getMachineId() != null) {
+            for (UserEntity user : users) {
+                boolean isAuthorized = user.getMachines().stream()
+                        .anyMatch(m -> m.getId().equals(request.getMachineId()));
+                if (!isAuthorized) {
+                    throw new RuntimeException("User " + user.getFullName() + " is not authorized for machine id: "
+                            + request.getMachineId());
+                }
+            }
+        }
 
         TaskAssignmentEntity entity = TaskAssignmentEntity.builder()
                 .template(template)
@@ -95,9 +106,22 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
                 .orElseThrow(() -> new EntityNotFoundException("Assignment not found with id: " + id));
 
         QcFormTemplateEntity template = templateRepository.findById(request.getTemplateId())
-                .orElseThrow(() -> new EntityNotFoundException("Template not found with id: " + request.getTemplateId()));
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Template not found with id: " + request.getTemplateId()));
 
         List<UserEntity> users = userRepository.findAllById(request.getUserIds());
+
+        // Validate machine authorization if machineId is present
+        if (request.getMachineId() != null) {
+            for (UserEntity user : users) {
+                boolean isAuthorized = user.getMachines().stream()
+                        .anyMatch(m -> m.getId().equals(request.getMachineId()));
+                if (!isAuthorized) {
+                    throw new RuntimeException("User " + user.getFullName() + " is not authorized for machine id: "
+                            + request.getMachineId());
+                }
+            }
+        }
 
         entity.setTemplate(template);
         entity.setType(request.getType());
@@ -136,7 +160,6 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     @Transactional(readOnly = true)
     public List<TaskAssignmentResponse> getActiveTasksForUser(Long userId) {
         LocalDateTime now = LocalDateTime.now();
-        LocalTime currentTime = now.toLocalTime();
         LocalDate today = now.toLocalDate();
         int dayOfWeek = now.getDayOfWeek().getValue();
 
@@ -161,12 +184,12 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
                     // Check if already completed in this window
                     LocalDateTime windowStart = LocalDateTime.of(today, schedule.getStartTime());
                     LocalDateTime windowEnd = LocalDateTime.of(today, schedule.getEndTime());
-                    
+
                     boolean alreadyDone = recordRepository.findByFilledById(userId).stream()
-                            .anyMatch(record -> record.getTemplate().getId().equals(assignment.getTemplate().getId()) 
-                                    && record.getCreatedAt().isAfter(windowStart) 
+                            .anyMatch(record -> record.getTemplate().getId().equals(assignment.getTemplate().getId())
+                                    && record.getCreatedAt().isAfter(windowStart)
                                     && record.getCreatedAt().isBefore(windowEnd));
-                    
+
                     if (!alreadyDone) {
                         activeTasks.add(toResponse(assignment));
                         break; // Found a matching schedule that hasn't been completed for today
@@ -186,10 +209,12 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     }
 
     private TaskAssignmentResponse toResponse(TaskAssignmentEntity entity) {
-        String machineName = entity.getMachineId() != null ? 
-                machineRepository.findById(entity.getMachineId()).map(m -> m.getName()).orElse(null) : null;
-        String productName = entity.getProductId() != null ? 
-                productRepository.findById(entity.getProductId()).map(p -> p.getName()).orElse(null) : null;
+        String machineName = entity.getMachineId() != null
+                ? machineRepository.findById(entity.getMachineId()).map(m -> m.getName()).orElse(null)
+                : null;
+        String productName = entity.getProductId() != null
+                ? productRepository.findById(entity.getProductId()).map(p -> p.getName()).orElse(null)
+                : null;
 
         return TaskAssignmentResponse.builder()
                 .id(entity.getId())
