@@ -248,6 +248,32 @@ const drawSingleRecordOnDoc = (doc: jsPDF, record: QcFormRecord, t: Translations
             }
         }
     });
+
+    // Signatures (Bottom)
+    const currentY = (doc as any).lastAutoTable.finalY + 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Ensure we don't draw off the page
+    const signatureY = Math.max(currentY, pageHeight - 35);
+
+    doc.setFontSize(10);
+    doc.setTextColor(COLORS.PRIMARY[0], COLORS.PRIMARY[1], COLORS.PRIMARY[2]);
+    doc.setFont('Roboto', 'bold');
+
+    // Prepared By (Dolduran)
+    doc.text(t.qcRecords.filledBy, 14, signatureY);
+    doc.setFont('Roboto', 'normal');
+    doc.setTextColor(COLORS.SECONDARY[0], COLORS.SECONDARY[1], COLORS.SECONDARY[2]);
+    doc.text(record.filledByName || '-', 14, signatureY + 7);
+
+    // Approved By (Onaylayan)
+    doc.setFont('Roboto', 'bold');
+    doc.setTextColor(COLORS.PRIMARY[0], COLORS.PRIMARY[1], COLORS.PRIMARY[2]);
+    doc.text(t.pdfExport.approver, pageWidth / 2, signatureY);
+    doc.setFont('Roboto', 'normal');
+    doc.setTextColor(COLORS.SECONDARY[0], COLORS.SECONDARY[1], COLORS.SECONDARY[2]);
+    doc.text(record.approvedByName || '-', pageWidth / 2, signatureY + 7);
 };
 
 export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations, lang: Language, logoBase64?: string) => {
