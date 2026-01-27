@@ -170,12 +170,10 @@ const drawSingleRecordOnDoc = (doc: jsPDF, record: QcFormRecord, t: Translations
         startY: 38,
         head: [[t.pdfExport.summaryInfo, t.pdfExport.value]],
         body: [
-            [t.qcRecords.filledBy, record.filledByName || '-'],
             [t.pdfExport.machineAsset, record.machineName || record.productInstanceSerial || '-'],
             [t.common.status, (t.qcRecords as any)[`status${record.status}`] || record.status],
             [t.qcRecords.result, translateResult(record.overallResult, t)],
-            [t.common.date, record.submittedAt ? new Date(record.submittedAt).toLocaleString(locale) : '-'],
-            [t.pdfExport.approver, record.approvedByName || '-']
+            [t.common.date, record.submittedAt ? new Date(record.submittedAt).toLocaleString(locale) : '-']
         ],
         theme: 'grid',
         headStyles: { fillColor: COLORS.PRIMARY, font: 'Roboto', fontStyle: 'bold', halign: 'center', cellPadding: 2, textColor: [255, 255, 255] },
