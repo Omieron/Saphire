@@ -393,6 +393,11 @@ export const translations = {
             statusSubmitted: 'Submitted',
             statusApproved: 'Approved',
             statusRejected: 'Rejected',
+            // Results
+            resultPass: 'Pass',
+            resultFail: 'Fail',
+            resultWarning: 'Warning',
+            resultNA: 'N/A',
             // Detail Modal
             recordDetails: 'Record Details',
             workflow: 'Workflow',
@@ -449,6 +454,8 @@ export const translations = {
             approver: 'Approver',
             machineAsset: 'Machine / Asset',
             sample: 'Sample',
+            detailedExport: 'Detailed PDF',
+            matrixReport: 'Matrix Report',
         },
     },
     tr: {
@@ -841,9 +848,14 @@ export const translations = {
             // Statuses
             statusDraft: 'Taslak',
             statusInProgress: 'İşleniyor',
-            statusSubmitted: 'Gönderildi',
+            statusSubmitted: 'Onay Bekliyor',
             statusApproved: 'Onaylandı',
             statusRejected: 'Reddedildi',
+            // Results
+            resultPass: 'Uygun',
+            resultFail: 'Uygun Değil',
+            resultWarning: 'Uyarı',
+            resultNA: 'N/A',
             // Detail Modal
             recordDetails: 'Kayıt Detayları',
             workflow: 'İş Akışı',
@@ -900,6 +912,8 @@ export const translations = {
             approver: 'Onaylayan',
             machineAsset: 'Makine / Varlık',
             sample: 'Numune',
+            detailedExport: 'Detaylı PDF',
+            matrixReport: 'Matris Rapor',
         },
     },
 };

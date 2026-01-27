@@ -15,6 +15,28 @@ const registerRobotoFont = (doc: jsPDF) => {
 
 const getLocale = (lang: Language) => lang === 'tr' ? 'tr-TR' : 'en-US';
 
+const translateResult = (result: string | null, t: Translations) => {
+    if (!result) return '-';
+    switch (result) {
+        case 'PASS': return t.qcRecords.resultPass;
+        case 'FAIL': return t.qcRecords.resultFail;
+        case 'WARNING': return t.qcRecords.resultWarning;
+        case 'NA': return t.qcRecords.resultNA;
+        default: return result;
+    }
+};
+
+const translateStatus = (status: string, t: Translations) => {
+    switch (status) {
+        case 'DRAFT': return t.qcRecords.statusDraft;
+        case 'IN_PROGRESS': return t.qcRecords.statusInProgress;
+        case 'SUBMITTED': return t.qcRecords.statusSubmitted;
+        case 'APPROVED': return t.qcRecords.statusApproved;
+        case 'REJECTED': return t.qcRecords.statusRejected;
+        default: return status;
+    }
+};
+
 // Professional Palette
 const COLORS: Record<string, [number, number, number]> = {
     PRIMARY: [30, 41, 59],   // Slate-900
@@ -102,10 +124,7 @@ export const exportQcRecordsToPdf = (records: QcFormRecord[], t: Translations, l
     doc.save(`${t.pdfExport.listTitle.replace(/\s+/g, '_')}_${fileNameDate}.pdf`);
 };
 
-export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations, lang: Language, logoBase64?: string) => {
-    const doc = new jsPDF();
-    registerRobotoFont(doc);
-
+const drawSingleRecordOnDoc = (doc: jsPDF, record: QcFormRecord, t: Translations, lang: Language, logoBase64?: string) => {
     const locale = getLocale(lang);
     const timestamp = new Date().toLocaleString(locale);
 
@@ -154,7 +173,7 @@ export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations,
             [t.qcRecords.filledBy, record.filledByName || '-'],
             [t.pdfExport.machineAsset, record.machineName || record.productInstanceSerial || '-'],
             [t.common.status, (t.qcRecords as any)[`status${record.status}`] || record.status],
-            [t.qcRecords.result, record.overallResult || '-'],
+            [t.qcRecords.result, translateResult(record.overallResult, t)],
             [t.common.date, record.submittedAt ? new Date(record.submittedAt).toLocaleString(locale) : '-'],
             [t.pdfExport.approver, record.approvedByName || '-']
         ],
@@ -178,7 +197,7 @@ export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations,
         v.valueBoolean !== null ? (v.valueBoolean ? t.common.yes : (lang === 'tr' ? 'Hayır' : 'No')) :
             v.valueNumber !== null ? v.valueNumber :
                 v.valueText || '-',
-        v.result || '-'
+        translateResult(v.result, t)
     ]);
 
     autoTable(doc, {
@@ -229,7 +248,181 @@ export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations,
             }
         }
     });
+};
 
+export const exportSingleQcRecordToPdf = (record: QcFormRecord, t: Translations, lang: Language, logoBase64?: string) => {
+    const doc = new jsPDF();
+    registerRobotoFont(doc);
+    drawSingleRecordOnDoc(doc, record, t, lang, logoBase64);
     const fileName = `${t.qcRecords.title}_#${record.id}_${record.templateCode}`.replace(/\s+/g, '_');
     doc.save(`${fileName}.pdf`);
+};
+
+export const exportDetailedBatchQcRecordsToPdf = (records: QcFormRecord[], t: Translations, lang: Language) => {
+    if (records.length === 0) return;
+    const doc = new jsPDF();
+    registerRobotoFont(doc);
+
+    records.forEach((record, index) => {
+        if (index > 0) doc.addPage();
+        drawSingleRecordOnDoc(doc, record, t, lang, record.companyLogo);
+    });
+
+    const fileNameDate = new Date().toISOString().split('T')[0];
+    const fileName = `${t.pdfExport.listTitle.replace(/\s+/g, '_')}_Detaylı_${fileNameDate}.pdf`;
+    doc.save(fileName);
+};
+
+export const exportMatrixQcRecordsToPdf = (records: QcFormRecord[], t: Translations, lang: Language) => {
+    if (records.length === 0) return;
+    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for matrix
+    registerRobotoFont(doc);
+
+    const locale = getLocale(lang);
+    const timestamp = new Date().toLocaleString(locale);
+
+    // Group records by template
+    const groups: Record<number, QcFormRecord[]> = {};
+    records.forEach(r => {
+        if (!groups[r.templateId]) groups[r.templateId] = [];
+        groups[r.templateId].push(r);
+    });
+
+    Object.values(groups).forEach((groupRecords, groupIndex) => {
+        if (groupIndex > 0) doc.addPage();
+
+        const first = groupRecords[0];
+        const logoBase64 = first.companyLogo;
+
+        // Header with Logo (Top Left)
+        if (logoBase64) {
+            try {
+                // Draw a subtle vertical separator line
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.2);
+                doc.line(51, 10, 51, 30);
+                doc.addImage(logoBase64, 'AUTO', 14, 10, 35, 20);
+            } catch (e) {
+                console.error('Matrix PDF Logo error:', e);
+                doc.setDrawColor(COLORS.BORDER[0], COLORS.BORDER[1], COLORS.BORDER[2]);
+                doc.rect(14, 10, 35, 20);
+                doc.setFontSize(7);
+                doc.text("IMG ERR", 31.5, 21, { align: 'center' });
+            }
+        } else {
+            doc.setDrawColor(COLORS.BORDER[0], COLORS.BORDER[1], COLORS.BORDER[2]);
+            doc.setLineDashPattern([1.5], 0);
+            doc.rect(14, 10, 35, 20);
+            doc.setFontSize(7);
+            doc.setTextColor(COLORS.MUTED[0], COLORS.MUTED[1], COLORS.MUTED[2]);
+            doc.text("LOGO", 31.5, 21, { align: 'center' });
+            doc.setLineDashPattern([], 0);
+        }
+
+        // Header Content
+        doc.setFontSize(18);
+        doc.setTextColor(COLORS.PRIMARY[0], COLORS.PRIMARY[1], COLORS.PRIMARY[2]);
+        doc.text(`${first.templateName} - ${t.pdfExport.matrixReport || 'Matris Rapor'}`, 55, 18.5);
+
+        doc.setFontSize(10);
+        doc.setTextColor(COLORS.SECONDARY[0], COLORS.SECONDARY[1], COLORS.SECONDARY[2]);
+        doc.text(`${t.pdfExport.reportDate}: ${timestamp}`, 55, 26.5);
+
+        // Collect unique headers from values
+        const headerMap = new Map<string, string>(); // key -> label
+        groupRecords.forEach(r => {
+            (r.values || []).forEach(v => {
+                const key = `${v.fieldId}_${v.repeatIndex || 0}`;
+                const label = v.fieldLabel + (v.repeatIndex ? ` (${t.pdfExport.sample} ${v.repeatIndex})` : '');
+                headerMap.set(key, label);
+            });
+        });
+
+        const headerKeys = Array.from(headerMap.keys());
+        const headers = [lang === 'tr' ? 'Saat' : t.common.date, ...Array.from(headerMap.values()), t.qcRecords.result];
+
+        // Prepare data rows
+        const body = groupRecords.sort((a, b) => (a.submittedAt || '').localeCompare(b.submittedAt || '')).map(r => {
+            const row: any[] = [
+                r.submittedAt ? new Date(r.submittedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : '-'
+            ];
+
+            headerKeys.forEach(key => {
+                const [fieldId, repeatIndex] = key.split('_').map(Number);
+                const val = (r.values || []).find(v => v.fieldId === fieldId && (v.repeatIndex || 0) === repeatIndex);
+                if (val) {
+                    const displayVal = val.valueBoolean !== null ? (val.valueBoolean ? t.common.yes : (lang === 'tr' ? 'Hayır' : 'No')) :
+                        val.valueNumber !== null ? val.valueNumber :
+                            val.valueText || '-';
+                    row.push(displayVal);
+                } else {
+                    row.push('-');
+                }
+            });
+
+            // If not approved, show the status label in the result column
+            const resultDisplay = r.status === 'APPROVED'
+                ? translateResult(r.overallResult, t)
+                : translateStatus(r.status, t);
+
+            row.push(resultDisplay);
+            return row;
+        });
+
+        autoTable(doc, {
+            startY: 35,
+            head: [headers],
+            body: body,
+            theme: 'grid',
+            headStyles: {
+                fillColor: COLORS.PRIMARY,
+                font: 'Roboto',
+                fontStyle: 'bold',
+                halign: 'center',
+                valign: 'middle',
+                fontSize: 7,
+                textColor: [255, 255, 255]
+            },
+            bodyStyles: {
+                font: 'Roboto',
+                fontSize: 7,
+                halign: 'center',
+                valign: 'middle'
+            },
+            styles: { cellPadding: 2, textColor: [40, 40, 40] },
+        });
+
+        // Signatures (Bottom)
+        const finalY = (doc as any).lastAutoTable.finalY + 15;
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        // Collect unique names for the footer
+        const filledByNames = Array.from(new Set(groupRecords.map(r => r.filledByName))).filter(Boolean).join(', ');
+        const approvedByNames = Array.from(new Set(groupRecords.map(r => r.approvedByName))).filter(Boolean).join(', ');
+
+        doc.setFontSize(9);
+        doc.setTextColor(COLORS.PRIMARY[0], COLORS.PRIMARY[1], COLORS.PRIMARY[2]);
+        doc.setFont('Roboto', 'bold');
+
+        // Drawn as two columns at bottom
+        const signatureY = Math.max(finalY, doc.internal.pageSize.getHeight() - 30);
+
+        // Preprared By (Dolduran)
+        doc.text(t.qcRecords.filledBy, 14, signatureY);
+        doc.setFont('Roboto', 'normal');
+        doc.setTextColor(COLORS.SECONDARY[0], COLORS.SECONDARY[1], COLORS.SECONDARY[2]);
+        doc.text(filledByNames || '-', 14, signatureY + 6);
+
+        // Approved By (Onaylayan)
+        doc.setFont('Roboto', 'bold');
+        doc.setTextColor(COLORS.PRIMARY[0], COLORS.PRIMARY[1], COLORS.PRIMARY[2]);
+        doc.text(t.pdfExport.approver, pageWidth / 2, signatureY);
+        doc.setFont('Roboto', 'normal');
+        doc.setTextColor(COLORS.SECONDARY[0], COLORS.SECONDARY[1], COLORS.SECONDARY[2]);
+        doc.text(approvedByNames || '-', pageWidth / 2, signatureY + 6);
+    });
+
+    const fileNameDate = new Date().toISOString().split('T')[0];
+    const fileName = `${t.pdfExport.listTitle.replace(/\s+/g, '_')}_Matrix_${fileNameDate}.pdf`;
+    doc.save(fileName);
 };

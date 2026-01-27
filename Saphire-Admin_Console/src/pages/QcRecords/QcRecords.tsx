@@ -3,7 +3,7 @@ import { Search, CheckCircle, XCircle, Clock, FileCheck, FileSearch, RotateCcw, 
 import { qcRecordApi } from '../../api/qcRecord.api';
 import type { QcFormRecord } from '../../api/qcRecord.api';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { exportQcRecordsToPdf, exportSingleQcRecordToPdf } from '../../utils/export.utils';
+import { exportSingleQcRecordToPdf, exportMatrixQcRecordsToPdf } from '../../utils/export.utils';
 
 const statusColors: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
     DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-500', icon: Clock },
@@ -29,6 +29,10 @@ export default function QcRecords() {
     const [filterStatus, setFilterStatus] = useState('');
     const [selectedRecord, setSelectedRecord] = useState<QcFormRecord | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [batchLoading, setBatchLoading] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportRange, setExportRange] = useState({ start: '', end: '' });
+    const [exportTemplate, setExportTemplate] = useState('');
 
     // Filter states
     const [filterTemplate, setFilterTemplate] = useState('');
@@ -50,6 +54,17 @@ export default function QcRecords() {
             case 'APPROVED': return t.qcRecords.statusApproved;
             case 'REJECTED': return t.qcRecords.statusRejected;
             default: return status;
+        }
+    };
+
+    const getResultLabel = (result: string | null) => {
+        if (!result) return '-';
+        switch (result) {
+            case 'PASS': return t.qcRecords.resultPass;
+            case 'FAIL': return t.qcRecords.resultFail;
+            case 'WARNING': return t.qcRecords.resultWarning;
+            case 'NA': return t.qcRecords.resultNA;
+            default: return result;
         }
     };
 
@@ -227,27 +242,21 @@ export default function QcRecords() {
                     </div>
 
                     <button
-                        onClick={async () => {
-                            // Fetch full details (with logo) for one record per company to get the logos
-                            // In a real production app, you might have a dedicated /api/companies/logos endpoint
-                            // Here we'll fetch the first record of the first company for simplicity, 
-                            // or just use a placeholder if we want to be super safe.
-                            // But for the "List Title" export, we usually want the system logo or the main company logo.
-
-                            let mainLogo: string | undefined = undefined;
-                            if (records.length > 0) {
-                                try {
-                                    const fullRecord = await qcRecordApi.getById(records[0].id);
-                                    mainLogo = fullRecord.data.data.companyLogo;
-                                } catch (e) { console.error('Logo fetch failed', e); }
-                            }
-                            exportQcRecordsToPdf(records, t, language, mainLogo);
+                        onClick={() => {
+                            setExportRange({ start: filterStartDate, end: filterEndDate });
+                            setExportTemplate(filterTemplate);
+                            setShowExportModal(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all font-bold h-[40px] shadow-sm shadow-teal-500/20 active:scale-95"
-                        title={`${t.common.all} PDF`}
+                        disabled={batchLoading || records.length === 0}
+                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all font-bold h-[40px] shadow-sm shadow-teal-500/20 active:scale-95 disabled:opacity-50"
+                        title={t.pdfExport.matrixReport}
                     >
-                        <FileDown size={18} />
-                        <span className="hidden sm:inline">{t.common.all} PDF</span>
+                        {batchLoading ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <FileDown size={18} />
+                        )}
+                        <span className="hidden sm:inline">{t.pdfExport.matrixReport}</span>
                     </button>
                 </div>
             </div>
@@ -289,7 +298,7 @@ export default function QcRecords() {
                                         <td className="px-6 py-4 text-sm text-[var(--color-text)]">{record.filledByName || '-'}</td>
                                         <td className="px-6 py-4">
                                             {resultStyle && record.status !== 'SUBMITTED' ? (
-                                                <span className={`inline-flex items-center px-2 py-1 ${resultStyle.bg} ${resultStyle.text} rounded text-xs font-medium`}>{record.overallResult}</span>
+                                                <span className={`inline-flex items-center px-2 py-1 ${resultStyle.bg} ${resultStyle.text} rounded text-xs font-medium`}>{getResultLabel(record.overallResult)}</span>
                                             ) : (
                                                 <span className="text-[var(--color-text-secondary)] text-xs">-</span>
                                             )}
@@ -333,7 +342,7 @@ export default function QcRecords() {
                                 </span>
                                 {selectedRecord.overallResult && selectedRecord.status !== 'SUBMITTED' && (
                                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${resultColors[selectedRecord.overallResult]?.bg} ${resultColors[selectedRecord.overallResult]?.text}`}>
-                                        {selectedRecord.overallResult}
+                                        {getResultLabel(selectedRecord.overallResult)}
                                     </span>
                                 )}
                                 <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-[var(--color-surface-hover)] rounded-lg transition-colors text-[var(--color-text-secondary)]">
@@ -440,7 +449,7 @@ export default function QcRecords() {
                                                             {v.result && (
                                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${v.result === 'PASS' ? 'bg-green-500/20 text-green-600' : 'bg-red-500/20 text-red-600'
                                                                     }`}>
-                                                                    {v.result}
+                                                                    {getResultLabel(v.result)}
                                                                 </span>
                                                             )}
                                                         </td>
@@ -503,6 +512,127 @@ export default function QcRecords() {
                             </button>
                             <button onClick={() => setShowDetailModal(false)} className="px-6 py-2 bg-[var(--color-text)] text-[var(--color-surface)] rounded-xl text-sm font-bold hover:opacity-90 transition-opacity">
                                 {t.common.close}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Export Selection Modal */}
+            {showExportModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[var(--color-surface)] rounded-2xl shadow-2xl border border-[var(--color-border)] w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-teal-500/5">
+                            <h3 className="text-lg font-bold text-[var(--color-text)] flex items-center gap-2">
+                                <FileDown size={20} className="text-teal-500" />
+                                {t.pdfExport.matrixReport}
+                            </h3>
+                            <button onClick={() => setShowExportModal(false)} className="p-2 hover:bg-[var(--color-surface-hover)] rounded-lg transition-colors text-[var(--color-text-secondary)]">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                                {language === 'tr'
+                                    ? 'Lütfen rapor için tarih aralığı seçiniz. Seçilen aralıktaki tüm kayıtlar matris formatında dışa aktarılacaktır.'
+                                    : 'Please select a date range for the report. All records within the range will be exported in matrix format.'}
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-[var(--color-text-secondary)]">Başlangıç</label>
+                                    <input
+                                        type="date"
+                                        value={exportRange.start}
+                                        onChange={(e) => setExportRange(prev => ({ ...prev, start: e.target.value }))}
+                                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-[var(--color-text-secondary)]">Bitiş</label>
+                                    <input
+                                        type="date"
+                                        value={exportRange.end}
+                                        onChange={(e) => setExportRange(prev => ({ ...prev, end: e.target.value }))}
+                                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-[var(--color-text-secondary)]">
+                                    {language === 'tr' ? 'Şablon Seçimi' : 'Template Selection'}
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={exportTemplate}
+                                        onChange={(e) => setExportTemplate(e.target.value)}
+                                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">{language === 'tr' ? 'Tüm Şablonlar' : 'All Templates'}</option>
+                                        {uniqueTemplates.map(tName => (
+                                            <option key={tName} value={tName}>{tName}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)]">
+                                        <ChevronDown size={16} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-3 bg-yellow-500/5 border border-yellow-500/10 rounded-xl text-[10px] text-yellow-600/80">
+                                <span className="font-bold mr-1">NOT:</span>
+                                {language === 'tr'
+                                    ? 'Arama ve durum filtreleri mevcut seçimlerinize göre uygulanacaktır.'
+                                    : 'Search and status filters will be applied based on your current selections.'}
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 bg-[var(--color-surface-hover)] border-t border-[var(--color-border)] flex gap-3">
+                            <button
+                                onClick={() => setShowExportModal(false)}
+                                className="flex-1 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)] rounded-xl transition-all font-bold text-sm"
+                            >
+                                {t.common.cancel}
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setShowExportModal(false);
+                                    setBatchLoading(true);
+                                    try {
+                                        // Fetch records for the specified range
+                                        const filters = {
+                                            search: debouncedSearch,
+                                            status: filterStatus || undefined,
+                                            templateName: exportTemplate || undefined,
+                                            machineName: filterMachine || undefined,
+                                            userName: filterUser || undefined,
+                                            startDate: exportRange.start || undefined,
+                                            endDate: exportRange.end || undefined
+                                        };
+                                        const response = await qcRecordApi.getAll(filters);
+                                        const exportRecords = response.data.data || [];
+
+                                        if (exportRecords.length === 0) {
+                                            alert(language === 'tr' ? 'Seçilen aralıkta kayıt bulunamadı.' : 'No records found for the selected range.');
+                                            return;
+                                        }
+
+                                        // Fetch full details for these records
+                                        const fullRecordsPromises = exportRecords.map(r => qcRecordApi.getById(r.id));
+                                        const responses = await Promise.all(fullRecordsPromises);
+                                        const fullRecords = responses.map(res => res.data.data);
+                                        exportMatrixQcRecordsToPdf(fullRecords, t, language);
+                                    } catch (e) {
+                                        console.error('Export failed:', e);
+                                    } finally {
+                                        setBatchLoading(false);
+                                    }
+                                }}
+                                disabled={batchLoading}
+                                className="flex-1 px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all font-bold text-sm shadow-md shadow-teal-500/20 disabled:opacity-50"
+                            >
+                                {batchLoading ? t.common.loading : (language === 'tr' ? 'Raporu Al' : 'Get Report')}
                             </button>
                         </div>
                     </div>
