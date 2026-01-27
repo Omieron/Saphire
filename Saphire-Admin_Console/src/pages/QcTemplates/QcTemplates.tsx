@@ -47,6 +47,15 @@ const CONTEXT_TYPES = [
     { value: 'GENERAL', labelKey: 'contextGeneral' },
 ];
 
+// Helper to parse decimal values robustly (handles both . and , as separators)
+const parseDecimal = (value: string | number | undefined | null): number | undefined => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (typeof value === 'number') return value;
+    const normalized = value.toString().replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return isNaN(parsed) ? undefined : parsed;
+};
+
 interface ControlPoint {
     id: string;
     label: string;
@@ -248,9 +257,9 @@ export default function QcTemplates() {
                 fieldKey: cp.fieldKey || cp.label.toLowerCase().replace(/\s+/g, '_'),
                 label: cp.label,
                 inputType: cp.inputType,
-                minValue: cp.minValue !== '' ? parseFloat(cp.minValue) : undefined,
-                maxValue: cp.maxValue !== '' ? parseFloat(cp.maxValue) : undefined,
-                targetValue: cp.targetValue !== '' ? parseFloat(cp.targetValue) : undefined,
+                minValue: parseDecimal(cp.minValue),
+                maxValue: parseDecimal(cp.maxValue),
+                targetValue: parseDecimal(cp.targetValue),
                 unit: cp.unit || undefined,
                 required: cp.required,
                 options: cp.options ? cp.options.split(/[\n,]/).map(o => o.trim()).filter(o => o) : undefined,

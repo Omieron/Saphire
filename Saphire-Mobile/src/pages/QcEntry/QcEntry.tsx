@@ -35,6 +35,14 @@ interface Template {
     sections: Section[];
 }
 
+// Helper to parse decimal values robustly (handles both . and , as separators)
+const parseDecimal = (value: any): number => {
+    if (value === undefined || value === null || value === '') return NaN;
+    if (typeof value === 'number') return value;
+    const normalized = value.toString().replace(',', '.');
+    return parseFloat(normalized);
+};
+
 // Helper Components
 function PassFailButton({ value, onChange, labels }: { value: boolean | null; onChange: (v: boolean) => void; labels: { yes: string; no: string } }) {
     return (
@@ -228,7 +236,7 @@ export default function QcEntry() {
                     hasFailed = true;
                 }
                 if ((inputType === 'NUMERIC' || inputType === 'NUMBER' || inputType === 'DECIMAL')) {
-                    const numVal = parseFloat(val);
+                    const numVal = parseDecimal(val);
                     if (!isNaN(numVal)) {
                         if ((field.minValue !== undefined && numVal < field.minValue) ||
                             (field.maxValue !== undefined && numVal > field.maxValue)) {
@@ -296,7 +304,7 @@ export default function QcEntry() {
                                     fieldId: field.id,
                                     repeatIndex: i,
                                     groupKey: `sample_${i}`,
-                                    [typeof val === 'boolean' ? 'valueBoolean' : (typeof val === 'number' || !isNaN(val) ? 'valueNumber' : 'valueText')]: typeof val === 'boolean' ? val : (typeof val === 'number' || !isNaN(val) ? parseFloat(val) : String(val))
+                                    [typeof val === 'boolean' ? 'valueBoolean' : (!isNaN(parseDecimal(val)) ? 'valueNumber' : 'valueText')]: typeof val === 'boolean' ? val : (!isNaN(parseDecimal(val)) ? parseDecimal(val) : String(val))
                                 });
                             }
                         });
@@ -307,7 +315,7 @@ export default function QcEntry() {
                         if (val !== undefined && val !== null && val !== '') {
                             valuesArray.push({
                                 fieldId: field.id,
-                                [typeof val === 'boolean' ? 'valueBoolean' : (typeof val === 'number' || !isNaN(val) ? 'valueNumber' : 'valueText')]: typeof val === 'boolean' ? val : (typeof val === 'number' || !isNaN(val) ? parseFloat(val) : String(val))
+                                [typeof val === 'boolean' ? 'valueBoolean' : (!isNaN(parseDecimal(val)) ? 'valueNumber' : 'valueText')]: typeof val === 'boolean' ? val : (!isNaN(parseDecimal(val)) ? parseDecimal(val) : String(val))
                             });
                         }
                     });
