@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Clock, FileCheck, FileSearch, RotateCcw, ChevronDown, FileDown } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, FileCheck, FileSearch, RotateCcw, ChevronDown, FileDown, X } from 'lucide-react';
 import { qcRecordApi } from '../../api/qcRecord.api';
 import type { QcFormRecord } from '../../api/qcRecord.api';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -34,6 +34,7 @@ export default function QcRecords() {
     const [exportRange, setExportRange] = useState({ start: '', end: '' });
     const [exportTemplate, setExportTemplate] = useState('');
     const [exportType, setExportType] = useState<'matrix' | 'individual'>('matrix');
+    const [exportingSingleRecord, setExportingSingleRecord] = useState<QcFormRecord | null>(null);
 
     // Filter states
     const [filterTemplate, setFilterTemplate] = useState('');
@@ -486,30 +487,14 @@ export default function QcRecords() {
                         {/* Modal Footer */}
                         <div className="px-6 py-4 border-t border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg)]/50 rounded-b-2xl">
                             <button
-                                onClick={async (e) => {
-                                    const btn = e.currentTarget;
-                                    const originalContent = btn.innerHTML;
-                                    try {
-                                        btn.disabled = true;
-                                        btn.innerHTML = '<div className="w-4 h-4 border-2 border-teal-600/30 border-t-teal-600 rounded-full animate-spin"></div>...';
-
-                                        // Fetch full record to get the logo
-                                        const response = await qcRecordApi.getById(selectedRecord.id);
-                                        const fullRecord = response.data.data;
-
-                                        console.log('Exporting with logo:', fullRecord.companyLogo ? 'Yes (Length: ' + fullRecord.companyLogo.length + ')' : 'No');
-                                        exportSingleQcRecordToPdf(fullRecord, t, language, fullRecord.companyLogo);
-                                    } catch (error) {
-                                        console.error('Export failed:', error);
-                                    } finally {
-                                        btn.disabled = false;
-                                        btn.innerHTML = originalContent;
-                                    }
+                                onClick={() => {
+                                    setExportingSingleRecord(selectedRecord);
+                                    setShowExportModal(true);
                                 }}
                                 className="flex items-center gap-2 px-6 py-2.5 bg-teal-500/10 text-teal-600 rounded-xl text-sm font-bold hover:bg-teal-500/20 active:scale-95 transition-all border border-teal-500/20 disabled:opacity-50"
                             >
                                 <FileDown size={18} />
-                                PDF {t.common.save}
+                                {t.pdfExport.export}
                             </button>
                             <button onClick={() => setShowDetailModal(false)} className="px-6 py-2 bg-[var(--color-text)] text-[var(--color-surface)] rounded-xl text-sm font-bold hover:opacity-90 transition-opacity">
                                 {t.common.close}
@@ -520,140 +505,175 @@ export default function QcRecords() {
             )}
             {/* Export Selection Modal */}
             {showExportModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[var(--color-surface)] rounded-2xl shadow-2xl border border-[var(--color-border)] w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-teal-500/5">
-                            <h3 className="text-lg font-bold text-[var(--color-text)] flex items-center gap-2">
-                                <FileDown size={20} className="text-teal-500" />
-                                {t.pdfExport.matrixReport}
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-[var(--color-surface)] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[var(--color-border)] w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-300">
+                        <div className="px-8 py-6 border-b border-[var(--color-border)] flex items-center justify-between bg-gradient-to-r from-teal-500/10 to-transparent">
+                            <h3 className="text-xl font-bold text-[var(--color-text)] flex items-center gap-3">
+                                <div className="p-2 bg-teal-500 rounded-xl text-white shadow-lg shadow-teal-500/20">
+                                    <FileDown size={22} />
+                                </div>
+                                {exportingSingleRecord ? t.pdfExport.export : t.pdfExport.matrixReport}
                             </h3>
-                            <button onClick={() => setShowExportModal(false)} className="p-2 hover:bg-[var(--color-surface-hover)] rounded-lg transition-colors text-[var(--color-text-secondary)]">
-                                <XCircle size={20} />
+                            <button onClick={() => { setShowExportModal(false); setExportingSingleRecord(null); }} className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-full transition-all text-[var(--color-text-secondary)]">
+                                <XCircle size={24} />
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-[var(--color-text-secondary)]">
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-[var(--color-text-secondary)] uppercase tracking-widest">
                                     {t.pdfExport.reportType}
                                 </label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => setExportType('matrix')}
-                                        className={`px-3 py-2 text-sm font-semibold rounded-xl border transition-all ${exportType === 'matrix'
-                                            ? 'bg-teal-500 border-teal-500 text-white shadow-md shadow-teal-500/20'
-                                            : 'bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/30'
+                                        className={`group relative overflow-hidden px-4 py-4 text-sm font-bold rounded-2xl border transition-all duration-300 ${exportType === 'matrix'
+                                            ? 'bg-teal-500 border-teal-500 text-white shadow-xl shadow-teal-500/30'
+                                            : 'bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/50 hover:bg-teal-500/5'
                                             }`}
                                     >
-                                        {t.pdfExport.matrixReport}
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className={`p-2 rounded-lg transition-colors ${exportType === 'matrix' ? 'bg-white/20' : 'bg-slate-500/10 group-hover:bg-teal-500/10'}`}>
+                                                <div className="w-5 h-2 bg-current opacity-60 rounded-sm mb-0.5"></div>
+                                                <div className="w-5 h-2 bg-current opacity-40 rounded-sm"></div>
+                                            </div>
+                                            {t.pdfExport.matrixReport}
+                                        </div>
                                     </button>
                                     <button
                                         onClick={() => setExportType('individual')}
-                                        className={`px-3 py-2 text-sm font-semibold rounded-xl border transition-all ${exportType === 'individual'
-                                            ? 'bg-teal-500 border-teal-500 text-white shadow-md shadow-teal-500/20'
-                                            : 'bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/30'
+                                        className={`group relative overflow-hidden px-4 py-4 text-sm font-bold rounded-2xl border transition-all duration-300 ${exportType === 'individual'
+                                            ? 'bg-teal-500 border-teal-500 text-white shadow-xl shadow-teal-500/30'
+                                            : 'bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/50 hover:bg-teal-500/5'
                                             }`}
                                     >
-                                        {t.pdfExport.individualReports}
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className={`p-2 rounded-lg transition-colors ${exportType === 'individual' ? 'bg-white/20' : 'bg-slate-500/10 group-hover:bg-teal-500/10'}`}>
+                                                <div className="w-4 h-5 border-2 border-current rounded-sm flex items-center justify-center">
+                                                    <div className="w-1.5 h-1.5 bg-current rounded-full"></div>
+                                                </div>
+                                            </div>
+                                            {t.pdfExport.individualReports}
+                                        </div>
                                     </button>
                                 </div>
                             </div>
 
-                            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                                {language === 'tr'
-                                    ? 'Lütfen rapor için tarih aralığı ve şablon seçiniz.'
-                                    : 'Please select a date range and template for the report.'}
-                            </p>
+                            {!exportingSingleRecord && (
+                                <>
+                                    <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                                        {language === 'tr'
+                                            ? 'Lütfen rapor için tarih aralığı ve şablon seçiniz.'
+                                            : 'Please select a date range and template for the report.'}
+                                    </p>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-[var(--color-text-secondary)]">Başlangıç</label>
-                                    <input
-                                        type="date"
-                                        value={exportRange.start}
-                                        onChange={(e) => setExportRange(prev => ({ ...prev, start: e.target.value }))}
-                                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-[var(--color-text-secondary)]">Bitiş</label>
-                                    <input
-                                        type="date"
-                                        value={exportRange.end}
-                                        onChange={(e) => setExportRange(prev => ({ ...prev, end: e.target.value }))}
-                                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-[var(--color-text-secondary)]">
-                                    {language === 'tr' ? 'Şablon Seçimi' : 'Template Selection'}
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        value={exportTemplate}
-                                        onChange={(e) => setExportTemplate(e.target.value)}
-                                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all appearance-none cursor-pointer"
-                                    >
-                                        <option value="">{language === 'tr' ? 'Tüm Şablonlar' : 'All Templates'}</option>
-                                        {uniqueTemplates.map(tName => (
-                                            <option key={tName} value={tName}>{tName}</option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)]">
-                                        <ChevronDown size={16} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-[var(--color-text-secondary)]">Başlangıç</label>
+                                            <input
+                                                type="date"
+                                                value={exportRange.start}
+                                                onChange={(e) => setExportRange(prev => ({ ...prev, start: e.target.value }))}
+                                                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-[var(--color-text-secondary)]">Bitiş</label>
+                                            <input
+                                                type="date"
+                                                value={exportRange.end}
+                                                onChange={(e) => setExportRange(prev => ({ ...prev, end: e.target.value }))}
+                                                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div className="p-3 bg-yellow-500/5 border border-yellow-500/10 rounded-xl text-[10px] text-yellow-600/80">
-                                <span className="font-bold mr-1">NOT:</span>
-                                {language === 'tr'
-                                    ? 'Arama ve durum filtreleri mevcut seçimlerinize göre uygulanacaktır.'
-                                    : 'Search and status filters will be applied based on your current selections.'}
-                            </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-[var(--color-text-secondary)]">
+                                            {language === 'tr' ? 'Şablon Seçimi' : 'Template Selection'}
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                value={exportTemplate}
+                                                onChange={(e) => setExportTemplate(e.target.value)}
+                                                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="">{language === 'tr' ? 'Tüm Şablonlar' : 'All Templates'}</option>
+                                                {uniqueTemplates.map(tName => (
+                                                    <option key={tName} value={tName}>{tName}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-text-secondary)]">
+                                                <ChevronDown size={16} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-teal-500/5 border border-teal-500/10 rounded-2xl text-[11px] text-teal-700/80 leading-relaxed">
+                                        <span className="font-black mr-1 uppercase tracking-tighter text-teal-600">NOT:</span>
+                                        {language === 'tr'
+                                            ? 'Arama ve durum filtreleri mevcut seçimlerinize göre uygulanacaktır.'
+                                            : 'Search and status filters will be applied based on your current selections.'}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
-                        <div className="px-6 py-4 bg-[var(--color-surface-hover)] border-t border-[var(--color-border)] flex gap-3">
+                        <div className="px-8 py-6 bg-[var(--color-surface-hover)] border-t border-[var(--color-border)] flex gap-4">
                             <button
-                                onClick={() => setShowExportModal(false)}
-                                className="flex-1 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)] rounded-xl transition-all font-bold text-sm"
+                                onClick={() => { setShowExportModal(false); setExportingSingleRecord(null); }}
+                                className="flex-1 px-6 py-3 bg-[var(--color-bg)] text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/5 border border-[var(--color-border)] hover:border-red-500/30 rounded-2xl transition-all duration-300 font-bold text-sm shadow-sm flex items-center justify-center gap-2 group"
                             >
+                                <X size={18} className="transition-transform group-hover:rotate-90" />
                                 {t.common.cancel}
                             </button>
                             <button
                                 onClick={async () => {
+                                    const isSingle = !!exportingSingleRecord;
+                                    const singleRec = exportingSingleRecord;
+
                                     setShowExportModal(false);
+                                    setExportingSingleRecord(null);
                                     setBatchLoading(true);
                                     try {
-                                        // Fetch records for the specified range
-                                        const filters = {
-                                            search: debouncedSearch,
-                                            status: filterStatus || undefined,
-                                            templateName: exportTemplate || undefined,
-                                            machineName: filterMachine || undefined,
-                                            userName: filterUser || undefined,
-                                            startDate: exportRange.start || undefined,
-                                            endDate: exportRange.end || undefined
-                                        };
-                                        const response = await qcRecordApi.getAll(filters);
-                                        const exportRecords = response.data.data || [];
+                                        let fullRecords: any[] = [];
 
-                                        if (exportRecords.length === 0) {
-                                            alert(language === 'tr' ? 'Seçilen aralıkta kayıt bulunamadı.' : 'No records found for the selected range.');
-                                            return;
+                                        if (isSingle && singleRec) {
+                                            const response = await qcRecordApi.getById(singleRec.id);
+                                            fullRecords = [response.data.data];
+                                        } else {
+                                            // Fetch records for the specified range
+                                            const filters = {
+                                                search: debouncedSearch,
+                                                status: filterStatus || undefined,
+                                                templateName: exportTemplate || undefined,
+                                                machineName: filterMachine || undefined,
+                                                userName: filterUser || undefined,
+                                                startDate: exportRange.start || undefined,
+                                                endDate: exportRange.end || undefined
+                                            };
+                                            const response = await qcRecordApi.getAll(filters);
+                                            const exportRecords = response.data.data || [];
+
+                                            if (exportRecords.length === 0) {
+                                                alert(language === 'tr' ? 'Seçilen aralıkta kayıt bulunamadı.' : 'No records found for the selected range.');
+                                                return;
+                                            }
+
+                                            // Fetch full details for these records
+                                            const fullRecordsPromises = exportRecords.map(r => qcRecordApi.getById(r.id));
+                                            const responses = await Promise.all(fullRecordsPromises);
+                                            fullRecords = responses.map(res => res.data.data);
                                         }
-
-                                        // Fetch full details for these records
-                                        const fullRecordsPromises = exportRecords.map(r => qcRecordApi.getById(r.id));
-                                        const responses = await Promise.all(fullRecordsPromises);
-                                        const fullRecords = responses.map(res => res.data.data);
 
                                         if (exportType === 'matrix') {
                                             exportMatrixQcRecordsToPdf(fullRecords, t, language);
                                         } else {
-                                            exportDetailedBatchQcRecordsToPdf(fullRecords, t, language);
+                                            if (isSingle) {
+                                                exportSingleQcRecordToPdf(fullRecords[0], t, language, fullRecords[0].companyLogo);
+                                            } else {
+                                                exportDetailedBatchQcRecordsToPdf(fullRecords, t, language);
+                                            }
                                         }
                                     } catch (e) {
                                         console.error('Export failed:', e);
@@ -662,14 +682,21 @@ export default function QcRecords() {
                                     }
                                 }}
                                 disabled={batchLoading}
-                                className="flex-1 px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all font-bold text-sm shadow-md shadow-teal-500/20 disabled:opacity-50"
+                                className="flex-[1.5] px-6 py-3 bg-teal-500 text-white rounded-2xl hover:bg-teal-600 active:scale-95 transition-all font-bold text-sm shadow-xl shadow-teal-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                {batchLoading ? t.common.loading : (language === 'tr' ? 'Raporu Al' : 'Get Report')}
+                                {batchLoading ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        <FileDown size={18} />
+                                        {language === 'tr' ? 'Dışa Aktar' : 'Export'}
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-        </div>
+        </div >
     );
 }
