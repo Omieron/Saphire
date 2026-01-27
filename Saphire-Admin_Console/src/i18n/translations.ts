@@ -456,6 +456,10 @@ export const translations = {
             sample: 'Sample',
             detailedExport: 'Detailed PDF',
             matrixReport: 'Matrix Report',
+            export: 'Export',
+            individualReports: 'Individual Reports',
+            reportType: 'Report Type',
+            selectReportType: 'Select report type...',
         },
     },
     tr: {
@@ -914,6 +918,10 @@ export const translations = {
             sample: 'Numune',
             detailedExport: 'Detaylı PDF',
             matrixReport: 'Matris Rapor',
+            export: 'Dışa Aktar',
+            individualReports: 'Bireysel Raporlar',
+            reportType: 'Rapor Türü',
+            selectReportType: 'Rapor türü seçiniz...',
         },
     },
 };

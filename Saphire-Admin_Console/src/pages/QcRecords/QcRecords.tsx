@@ -3,7 +3,7 @@ import { Search, CheckCircle, XCircle, Clock, FileCheck, FileSearch, RotateCcw, 
 import { qcRecordApi } from '../../api/qcRecord.api';
 import type { QcFormRecord } from '../../api/qcRecord.api';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { exportSingleQcRecordToPdf, exportMatrixQcRecordsToPdf } from '../../utils/export.utils';
+import { exportSingleQcRecordToPdf, exportMatrixQcRecordsToPdf, exportDetailedBatchQcRecordsToPdf } from '../../utils/export.utils';
 
 const statusColors: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
     DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-500', icon: Clock },
@@ -33,6 +33,7 @@ export default function QcRecords() {
     const [showExportModal, setShowExportModal] = useState(false);
     const [exportRange, setExportRange] = useState({ start: '', end: '' });
     const [exportTemplate, setExportTemplate] = useState('');
+    const [exportType, setExportType] = useState<'matrix' | 'individual'>('matrix');
 
     // Filter states
     const [filterTemplate, setFilterTemplate] = useState('');
@@ -249,14 +250,14 @@ export default function QcRecords() {
                         }}
                         disabled={batchLoading || records.length === 0}
                         className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all font-bold h-[40px] shadow-sm shadow-teal-500/20 active:scale-95 disabled:opacity-50"
-                        title={t.pdfExport.matrixReport}
+                        title={t.pdfExport.export}
                     >
                         {batchLoading ? (
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : (
                             <FileDown size={18} />
                         )}
-                        <span className="hidden sm:inline">{t.pdfExport.matrixReport}</span>
+                        <span className="hidden sm:inline">{t.pdfExport.export}</span>
                     </button>
                 </div>
             </div>
@@ -532,10 +533,36 @@ export default function QcRecords() {
                         </div>
 
                         <div className="p-6 space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-[var(--color-text-secondary)]">
+                                    {t.pdfExport.reportType}
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => setExportType('matrix')}
+                                        className={`px-3 py-2 text-sm font-semibold rounded-xl border transition-all ${exportType === 'matrix'
+                                            ? 'bg-teal-500 border-teal-500 text-white shadow-md shadow-teal-500/20'
+                                            : 'bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/30'
+                                            }`}
+                                    >
+                                        {t.pdfExport.matrixReport}
+                                    </button>
+                                    <button
+                                        onClick={() => setExportType('individual')}
+                                        className={`px-3 py-2 text-sm font-semibold rounded-xl border transition-all ${exportType === 'individual'
+                                            ? 'bg-teal-500 border-teal-500 text-white shadow-md shadow-teal-500/20'
+                                            : 'bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-teal-500/30'
+                                            }`}
+                                    >
+                                        {t.pdfExport.individualReports}
+                                    </button>
+                                </div>
+                            </div>
+
                             <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
                                 {language === 'tr'
-                                    ? 'Lütfen rapor için tarih aralığı seçiniz. Seçilen aralıktaki tüm kayıtlar matris formatında dışa aktarılacaktır.'
-                                    : 'Please select a date range for the report. All records within the range will be exported in matrix format.'}
+                                    ? 'Lütfen rapor için tarih aralığı ve şablon seçiniz.'
+                                    : 'Please select a date range and template for the report.'}
                             </p>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -622,7 +649,12 @@ export default function QcRecords() {
                                         const fullRecordsPromises = exportRecords.map(r => qcRecordApi.getById(r.id));
                                         const responses = await Promise.all(fullRecordsPromises);
                                         const fullRecords = responses.map(res => res.data.data);
-                                        exportMatrixQcRecordsToPdf(fullRecords, t, language);
+
+                                        if (exportType === 'matrix') {
+                                            exportMatrixQcRecordsToPdf(fullRecords, t, language);
+                                        } else {
+                                            exportDetailedBatchQcRecordsToPdf(fullRecords, t, language);
+                                        }
                                     } catch (e) {
                                         console.error('Export failed:', e);
                                     } finally {
