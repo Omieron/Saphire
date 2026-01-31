@@ -2,7 +2,7 @@
 ## Industrial Quality Control & Production Monitoring System
 
 <p align="center">
-  <img src="./assets/admin-demo.gif" alt="Saphire Admin Console Demo" width="100%"/>
+  <img src="./assets/admin-dashboard.png" alt="Saphire Dashboard" width="100%"/>
 </p>
 
 **Saphire** is a comprehensive, cloud-ready solution designed for modern manufacturing facilities. It enables full traceability, real-time quality control, and efficient production management from the factory floor to the executive office.
@@ -261,10 +261,6 @@ Operators will see the assigned task on their mobile dashboard when the schedule
 ## 📱 Mobile Application Guide
 
 The Mobile Application is designed for factory floor operators. It's optimized for touch screens and works well on tablets and smartphones.
-
-<p align="center">
-  <img src="./assets/mobile-demo.gif" alt="Saphire Mobile App Demo" width="100%"/>
-</p>
 
 ### Dashboard
 
